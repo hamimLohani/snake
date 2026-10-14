@@ -29,13 +29,7 @@ type UIModel struct {
 	FinalRecorded  bool
 	IsBot          bool
 	BotFunc        func(g *engine.Game) engine.Direction
-	RecordedMoves  []ReplayStep
-}
-
-// ReplayStep stores a timestamped action for determinism replays.
-type ReplayStep struct {
-	Tick      uint64           `json:"tick"`
-	Direction engine.Direction `json:"direction"`
+	RecordedMoves  []storage.ReplayStep
 }
 
 // NewUIModel constructs an initialized Bubble Tea model.
@@ -60,7 +54,7 @@ func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, them
 		Stats:         stats,
 		BossType:      bossType,
 		StartTime:     time.Now(),
-		RecordedMoves: make([]ReplayStep, 0),
+		RecordedMoves: make([]storage.ReplayStep, 0),
 	}
 }
 
@@ -111,6 +105,22 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				})
 				_ = storage.SaveStats(m.Stats)
 				_ = storage.ClearSaveGame()
+
+				// Auto-record replay
+				rep := storage.ReplayFile{
+					Version:       "1.0.0",
+					Date:          time.Now(),
+					Mode:          m.Game.Config.Mode,
+					Seed:          m.Game.Config.Seed,
+					Width:         m.Game.Config.Width,
+					Height:        m.Game.Config.Height,
+					WithObstacles: m.Game.Config.WithObstacles,
+					FinalScore:    m.Game.Score,
+					FinalLength:   len(m.Game.Snake),
+					TotalTicks:    m.Game.TickCount,
+					Steps:         m.RecordedMoves,
+				}
+				_ = storage.SaveReplay(storage.LatestReplayPath(), rep)
 			}
 			return m, nil
 		}
@@ -178,7 +188,7 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.StartTime = time.Now()
 				m.FinalRecorded = false
 				m.Paused = false
-				m.RecordedMoves = make([]ReplayStep, 0)
+				m.RecordedMoves = make([]storage.ReplayStep, 0)
 				return m, scheduleTick(m.Game.TickDuration())
 			}
 		}
@@ -200,7 +210,7 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if targetDir != engine.DirNone {
 				queued := m.Game.QueueDirection(targetDir)
 				if queued {
-					m.RecordedMoves = append(m.RecordedMoves, ReplayStep{
+					m.RecordedMoves = append(m.RecordedMoves, storage.ReplayStep{
 						Tick:      m.Game.TickCount,
 						Direction: targetDir,
 					})
