@@ -118,6 +118,8 @@ All keys are fully rebindable in `~/.config/snake/config.toml`:
 
 ## 🕹️ Game Modes
 
+> 📖 For detailed mechanics, speed curves, scoring formulas, and collision physics, see the complete [**Modes, Difficulties & Rulebook (`MODES_AND_RULES.md`)**](MODES_AND_RULES.md).
+
 | Mode | Flag | Description |
 |------|------|-------------|
 | **Classic** | `--mode classic` | Standard snake mechanics; eat food, grow, avoid walls and your own tail. |
