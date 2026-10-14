@@ -16,6 +16,20 @@ type tickMsg time.Time
 
 type hardwareDirMsg engine.Direction
 
+// BoardSizePreset represents a selectable board dimension option.
+type BoardSizePreset struct {
+	Label  string
+	Width  int
+	Height int
+}
+
+var BoardSizePresets = []BoardSizePreset{
+	{Label: "SMALL (20×12)", Width: 20, Height: 12},
+	{Label: "MEDIUM (28×16)", Width: 28, Height: 16},
+	{Label: "CLASSIC (24×20)", Width: 24, Height: 20},
+	{Label: "LARGE (36×20)", Width: 36, Height: 20},
+}
+
 // UIModel is the Bubble Tea model controlling the interactive game.
 type UIModel struct {
 	Game               *engine.Game
@@ -37,6 +51,7 @@ type UIModel struct {
 	MenuIndex          int
 	SelectedMode       int
 	SelectedDifficulty int
+	SelectedSize       int
 	SelectedTheme      int
 	SelectedObstacles  bool
 	IsInitialStart     bool
@@ -81,6 +96,15 @@ func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, them
 		diffIdx = 0 // easy
 	}
 
+	// Initial size index
+	sizeIdx := 2 // default to Classic (24x20)
+	for i, s := range BoardSizePresets {
+		if s.Width == game.Config.Width && s.Height == game.Config.Height {
+			sizeIdx = i
+			break
+		}
+	}
+
 	// Initial theme index
 	themes := []string{"dark", "light", "high-contrast", "colorblind", "corporate"}
 	themeIdx := 0
@@ -101,6 +125,7 @@ func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, them
 		RecordedMoves:      make([]storage.ReplayStep, 0),
 		SelectedMode:       modeIdx,
 		SelectedDifficulty: diffIdx,
+		SelectedSize:       sizeIdx,
 		SelectedTheme:      themeIdx,
 		SelectedObstacles:  game.Config.WithObstacles,
 		InMenu:             startInMenu,
@@ -269,9 +294,9 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Handle Menu Navigation if InMenu is open
 		if m.InMenu {
 			hasSave := m.IsInitialStart && m.HasSaveGame
-			totalMenuRows := 6
+			totalMenuRows := 7
 			if hasSave || !m.IsInitialStart {
-				totalMenuRows = 7
+				totalMenuRows = 8
 			}
 
 			switch {
@@ -317,14 +342,14 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							return m, scheduleTick(m.Game.TickDuration())
 						case 1: // Start New Game
 							return m, m.applyAndRestart()
-						case 6: // Quit Game
+						case 7: // Quit Game
 							return m, tea.Quit
 						}
 					} else {
 						switch m.MenuIndex {
 						case 0: // Start Game
 							return m, m.applyAndRestart()
-						case 5: // Quit Game
+						case 6: // Quit Game
 							return m, tea.Quit
 						}
 					}
@@ -336,9 +361,9 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.Paused = false
 						}
 						return m, nil
-					case 5: // Apply & Restart New Game
+					case 6: // Apply & Restart New Game
 						return m, m.applyAndRestart()
-					case 6: // Quit Game
+					case 7: // Quit Game
 						return m, tea.Quit
 					}
 				}
@@ -443,12 +468,12 @@ func (m UIModel) renderScreenReader() string {
 
 func (m UIModel) currentSettingIndex() int {
 	if m.IsInitialStart && m.HasSaveGame {
-		if m.MenuIndex >= 2 && m.MenuIndex <= 5 {
+		if m.MenuIndex >= 2 && m.MenuIndex <= 6 {
 			return m.MenuIndex - 2
 		}
 		return -1
 	}
-	if m.MenuIndex >= 1 && m.MenuIndex <= 4 {
+	if m.MenuIndex >= 1 && m.MenuIndex <= 5 {
 		return m.MenuIndex - 1
 	}
 	return -1
@@ -465,9 +490,12 @@ func (m *UIModel) adjustMenuSetting(delta int, settingIdx int) {
 		if m.SelectedDifficulty == 3 {
 			m.SelectedObstacles = true
 		}
-	case 2: // Obstacles
+	case 2: // Board Size
+		totalSizes := len(BoardSizePresets)
+		m.SelectedSize = (m.SelectedSize + delta + totalSizes) % totalSizes
+	case 3: // Obstacles
 		m.SelectedObstacles = !m.SelectedObstacles
-	case 3: // Theme
+	case 4: // Theme
 		totalThemes := 5
 		m.SelectedTheme = (m.SelectedTheme + delta + totalThemes) % totalThemes
 		themes := []string{"dark", "light", "high-contrast", "colorblind", "corporate"}
@@ -502,10 +530,12 @@ func (m *UIModel) applyAndRestart() tea.Cmd {
 	m.Theme = GetTheme(chosenTheme)
 	m.Config.Theme = chosenTheme
 
+	chosenSize := BoardSizePresets[m.SelectedSize]
+
 	seed := time.Now().UnixNano()
 	cfg := engine.Config{
-		Width:           m.Config.GridWidth,
-		Height:          m.Config.GridHeight,
+		Width:           chosenSize.Width,
+		Height:          chosenSize.Height,
 		Mode:            chosenMode,
 		Seed:            seed,
 		InitialSnakeLen: 3,
@@ -608,10 +638,11 @@ func (m UIModel) renderMenuScreen() string {
 				"",
 				formatRow(2, "Mode:", modes[m.SelectedMode]),
 				formatRow(3, "Difficulty:", diffs[m.SelectedDifficulty]),
-				formatRow(4, "Obstacles:", obsStr),
-				formatRow(5, "Theme:", themes[m.SelectedTheme]),
+				formatRow(4, "Board Size:", BoardSizePresets[m.SelectedSize].Label),
+				formatRow(5, "Obstacles:", obsStr),
+				formatRow(6, "Theme:", themes[m.SelectedTheme]),
 				"",
-				formatButton(6, "Quit Game", false),
+				formatButton(7, "Quit Game", false),
 				"",
 				dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
 				dimStyle.Render(" [Enter] Select  •  [Space] Play Now  •  [Q] Quit"),
@@ -625,10 +656,11 @@ func (m UIModel) renderMenuScreen() string {
 				"",
 				formatRow(1, "Mode:", modes[m.SelectedMode]),
 				formatRow(2, "Difficulty:", diffs[m.SelectedDifficulty]),
-				formatRow(3, "Obstacles:", obsStr),
-				formatRow(4, "Theme:", themes[m.SelectedTheme]),
+				formatRow(3, "Board Size:", BoardSizePresets[m.SelectedSize].Label),
+				formatRow(4, "Obstacles:", obsStr),
+				formatRow(5, "Theme:", themes[m.SelectedTheme]),
 				"",
-				formatButton(5, "Quit Game", false),
+				formatButton(6, "Quit Game", false),
 				"",
 				dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
 				dimStyle.Render(" [Enter] Select  •  [Space] Play Now  •  [Q] Quit"),
@@ -645,11 +677,12 @@ func (m UIModel) renderMenuScreen() string {
 			"",
 			formatRow(1, "Mode:", modes[m.SelectedMode]),
 			formatRow(2, "Difficulty:", diffs[m.SelectedDifficulty]),
-			formatRow(3, "Obstacles:", obsStr),
-			formatRow(4, "Theme:", themes[m.SelectedTheme]),
+			formatRow(3, "Board Size:", BoardSizePresets[m.SelectedSize].Label),
+			formatRow(4, "Obstacles:", obsStr),
+			formatRow(5, "Theme:", themes[m.SelectedTheme]),
 			"",
-			formatButton(5, "Apply & Restart New Game", false),
-			formatButton(6, "Quit Game", false),
+			formatButton(6, "Apply & Restart New Game", false),
+			formatButton(7, "Quit Game", false),
 			"",
 			dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
 			dimStyle.Render(" [Enter] Select  •  [Esc / P] Resume  •  [Q] Quit"),
@@ -658,7 +691,13 @@ func (m UIModel) renderMenuScreen() string {
 
 	innerContent := strings.Join(lines, "\n")
 	w := (m.Game.Bounds.MaxX - m.Game.Bounds.MinX) * 2
+	if w < 64 {
+		w = 64
+	}
 	h := m.Game.Bounds.MaxY - m.Game.Bounds.MinY
+	if h < 20 {
+		h = 20
+	}
 
 	placed := lipgloss.Place(w, h, lipgloss.Center, lipgloss.Center, innerContent)
 	return m.Theme.BorderStyle.Render(placed)

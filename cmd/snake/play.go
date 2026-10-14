@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"snake/internal/engine"
@@ -25,6 +26,7 @@ var (
 	playDifficulty   string
 	playHardwareUDP  string
 	playDirect       bool
+	playSize         string
 )
 
 var playCmd = &cobra.Command{
@@ -51,9 +53,36 @@ var playCmd = &cobra.Command{
 			cmd.Flags().Changed("theme") ||
 			cmd.Flags().Changed("screen-reader") ||
 			cmd.Flags().Changed("hardware-udp") ||
-			cmd.Flags().Changed("direct")
+			cmd.Flags().Changed("direct") ||
+			cmd.Flags().Changed("size")
 
 		startInMenu := !playDirect && !hasExplicitFlags
+
+		if playSize != "" {
+			switch strings.ToLower(playSize) {
+			case "small":
+				cfg.GridWidth = 20
+				cfg.GridHeight = 12
+			case "medium":
+				cfg.GridWidth = 28
+				cfg.GridHeight = 16
+			case "classic":
+				cfg.GridWidth = 24
+				cfg.GridHeight = 20
+			case "large":
+				cfg.GridWidth = 36
+				cfg.GridHeight = 20
+			default:
+				var w, h int
+				if n, _ := fmt.Sscanf(playSize, "%dx%d", &w, &h); n == 2 && w >= 10 && h >= 8 {
+					cfg.GridWidth = w
+					cfg.GridHeight = h
+				} else {
+					fmt.Fprintf(os.Stderr, "Unknown size '%s'. Valid options: small, medium, classic, large, or WxH (e.g. 30x15)\n", playSize)
+					os.Exit(1)
+				}
+			}
+		}
 
 		// Mode resolution
 		mode := engine.ModeClassic
@@ -163,6 +192,7 @@ func init() {
 	playCmd.Flags().BoolVar(&playScreenReader, "screen-reader", false, "Accessible screen-reader output mode")
 	playCmd.Flags().IntVar(&playSpeed, "speed", 0, "Override tick speed in milliseconds (e.g. 150 for slower, 70 for faster)")
 	playCmd.Flags().StringVarP(&playDifficulty, "difficulty", "d", "", "Difficulty preset: easy, normal, hard, insane")
+	playCmd.Flags().StringVarP(&playSize, "size", "s", "", "Board size preset (small, medium, classic, large) or WxH (e.g. 30x15)")
 	playCmd.Flags().StringVar(&playHardwareUDP, "hardware-udp", "", "Listen for ESP8266/ESP32 inputs on UDP addr (e.g. ':4242')")
 	playCmd.Flags().BoolVar(&playDirect, "direct", false, "Start game directly without showing the main menu")
 	rootCmd.AddCommand(playCmd)

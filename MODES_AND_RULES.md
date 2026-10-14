@@ -231,5 +231,23 @@ When running `snake` or `snake play` without flags, the game opens directly into
 
 - **Start Game:** Press `Enter` on `[ ▶ START GAME ]` or press `Space` anywhere in the menu to start playing immediately.
 - **Resume Saved Game:** If an unfinished session was saved (via Boss Key `B` or Quit `Q`), the menu offers `[ ▶ RESUME SAVED GAME (Score: X) ]`.
-- **Adjust Settings:** Navigate with `↑`/`↓` and cycle `Mode`, `Difficulty`, `Obstacles`, and `Theme` with `←`/`→`.
-- **Direct Play (`--direct`):** Bypass the menu completely by passing `--direct` or any specific flags (e.g., `snake play --mode survival` or `snake -d hard`).
+- **Adjust Settings:** Navigate with `↑`/`↓` and cycle `Mode`, `Difficulty`, `Board Size`, `Obstacles`, and `Theme` with `←`/`→`.
+- **Direct Play (`--direct`):** Bypass the menu completely by passing `--direct` or any specific flags (e.g., `snake play --mode survival`, `snake -d hard`, or `snake --size large`).
+
+---
+
+## 📐 Board Size Presets
+
+| Size Preset | Grid Dimensions (Cells) | Terminal Footprint (Columns × Rows) | Best For |
+|-------------|-------------------------|-------------------------------------|----------|
+| **Small**   | `20 × 12` | 40 cols × 12 rows | Compact split panes & small laptop windows |
+| **Medium**  | `28 × 16` | 56 cols × 16 rows | Balanced arena with quick reflex dynamics |
+| **Classic** | `24 × 20` | 48 cols × 20 rows | Standard retro terminal aspect ratio (Default) |
+| **Large**   | `36 × 20` | 72 cols × 20 rows | Spacious board for mega lengths and high scores |
+
+> **CLI Flag:** `-s, --size <preset|WxH>`
+>
+> Examples:
+> - `snake play --size small`
+> - `snake play -s large`
+> - `snake play --size 30x15` (custom Width × Height)

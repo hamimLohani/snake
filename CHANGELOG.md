@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.3] - 2026-10-15
 
 ### Added
+- **Board Size Selection**: Choose from 4 curated board size presets: `SMALL (20×12)` for compact split screens, `MEDIUM (28×16)` for balanced play, `CLASSIC (24×20)` retro standard, and `LARGE (36×20)` spacious arena. Cycle interactively in the main/pause menu or pass CLI flags via `--size` / `-s` (supporting named presets or custom `WxH` like `30x15`).
 - **Interactive Main Menu on Launch**: Running `snake` or `snake play` now opens directly into a sleek, full-screen **Main Menu & Settings** screen before gameplay starts.
-- **Instant Play / Skip Menu (`--direct`)**: Added `--direct` flag to bypass the main menu and begin playing immediately. Passing explicit configuration flags (e.g. `--mode`, `-d`, `--speed`, `--obstacles`, `--seed`) also bypasses the menu for immediate gameplay.
+- **Instant Play / Skip Menu (`--direct`)**: Added `--direct` flag to bypass the main menu and begin playing immediately. Passing explicit configuration flags (e.g. `--mode`, `-d`, `-s`, `--speed`, `--obstacles`, `--seed`) also bypasses the menu for immediate gameplay.
 - **Smart Saved-Game Resume**: When an unfinished game exists from a previous session or Boss Key exit, the menu prominently offers `[ ▶ RESUME SAVED GAME ]` with score preview, as well as `[ Start New Game ]`.
 - **Keyboard-First Menu UX**: Press `Enter` or `Space` anywhere in the start menu to start playing immediately. Use `Up`/`Down` (`W`/`S`) to navigate, `Left`/`Right` (`A`/`D`) to cycle options, and `Q` to quit.
 

@@ -53,6 +53,9 @@ func TestNewUIModel_StartInMenu(t *testing.T) {
 	if !strings.Contains(view, "Mode:") {
 		t.Errorf("Expected view to contain 'Mode:'")
 	}
+	if !strings.Contains(view, "Board Size:") {
+		t.Errorf("Expected view to contain 'Board Size:'")
+	}
 }
 
 func TestNewUIModel_StartInMenu_WithSavedGame(t *testing.T) {
@@ -136,6 +139,16 @@ func TestUIModel_MenuNavigationAndAdjustment(t *testing.T) {
 		t.Errorf("Expected SelectedDifficulty 2, got %d", m.SelectedDifficulty)
 	}
 
+	// Press Down to Board Size
+	newModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m = newModel.(UIModel)
+	if m.MenuIndex != 3 {
+		t.Fatalf("Expected MenuIndex 3 after Down key, got %d", m.MenuIndex)
+	}
+
+	// Cycle Board Size to LARGE (index 3)
+	m.SelectedSize = 3 // BoardSizePresets[3] = LARGE (36x20)
+
 	// Press Enter to start game (or Space)
 	newModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeySpace})
 	m = newModel.(UIModel)
@@ -154,6 +167,9 @@ func TestUIModel_MenuNavigationAndAdjustment(t *testing.T) {
 	}
 	if m.Game.Config.BaseTickRateMs != 75 { // Hard = 75ms
 		t.Errorf("Expected tick speed to be 75ms for Hard, got %d", m.Game.Config.BaseTickRateMs)
+	}
+	if m.Game.Config.Width != 36 || m.Game.Config.Height != 20 {
+		t.Errorf("Expected game grid to be 36x20, got %dx%d", m.Game.Config.Width, m.Game.Config.Height)
 	}
 	if cmd == nil {
 		t.Errorf("Expected ticker command to be returned on start")

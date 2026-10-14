@@ -63,8 +63,15 @@ make build
 ## 🎮 CLI Interface
 
 ```bash
-# Play standard classic mode
+# Launch interactive Main Menu & Settings
+snake
 snake play
+
+# Start playing directly with custom board size and difficulty
+snake play --direct
+snake play --size large --difficulty hard
+snake play -s small -d easy
+snake play --size 30x15 --mode survival
 
 # Choose a game mode and visual theme
 snake play --mode time-attack --theme dark
