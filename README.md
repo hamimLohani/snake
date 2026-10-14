@@ -40,23 +40,58 @@
 
 ## 🚀 Installation
 
-### Option 1: Homebrew (macOS & Linux)
+### Option 1: Quick Install (Linux & macOS)
+Install the latest pre-compiled binary with a single command:
+```bash
+curl -fsSL https://raw.githubusercontent.com/hamimLohani/snake/main/install.sh | bash
+```
+
+### Option 2: Direct Binary Download (Linux)
+
+#### Linux x86_64 (amd64):
+```bash
+# Download binary using curl
+curl -sL https://github.com/hamimLohani/snake/releases/latest/download/snake-linux-amd64 -o snake
+chmod +x snake
+sudo mv snake /usr/local/bin/
+
+# Or using wget:
+wget -qO snake https://github.com/hamimLohani/snake/releases/latest/download/snake-linux-amd64
+chmod +x snake
+sudo mv snake /usr/local/bin/
+```
+
+#### Linux ARM64 (aarch64 — Raspberry Pi, AWS Graviton, etc.):
+```bash
+curl -sL https://github.com/hamimLohani/snake/releases/latest/download/snake-linux-arm64 -o snake
+chmod +x snake
+sudo mv snake /usr/local/bin/
+```
+
+#### Linux Tarball Archive (.tar.gz):
+```bash
+curl -sL https://github.com/hamimLohani/snake/releases/latest/download/snake-v1.0.4-linux-amd64.tar.gz | tar -xz
+sudo mv snake-linux-amd64 /usr/local/bin/snake
+```
+
+### Option 3: Homebrew (macOS & Linux)
 ```bash
 brew tap hamimlohani/tap
 brew install snake
 ```
 
-### Option 2: Go Native Package Manager
+### Option 4: Go Native Package Manager
 ```bash
-go install snake/cmd/snake@latest
+go install github.com/hamimLohani/snake/cmd/snake@latest
 ```
 
-### Option 3: From Source
+### Option 5: Build From Source
 ```bash
-git clone https://github.com/developer/snake.git
+git clone https://github.com/hamimLohani/snake.git
 cd snake
 make build
 # Binary created at ./bin/snake
+sudo make install
 ```
 
 ---
