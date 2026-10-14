@@ -212,6 +212,7 @@ $$\text{Points Earned} = \text{Base Points} \times \text{Active Multiplier}$$
 
 | Action | Primary Keys | Vim / Alternative | Context |
 |--------|--------------|-------------------|---------|
+| **Start / Play Game** | `Enter` | `Space` | In Main Menu |
 | **Turn Up** | `↑` (Up Arrow) | `W` / `K` | Playing / In Menu |
 | **Turn Down** | `↓` (Down Arrow) | `S` / `J` | Playing / In Menu |
 | **Turn Left** | `←` (Left Arrow) | `A` / `H` | Playing / Adjust Setting |
@@ -221,3 +222,14 @@ $$\text{Points Earned} = \text{Base Points} \times \text{Active Multiplier}$$
 | **Instant Boss Key** | `B` | `Esc` | Instantly swaps screen to fake `htop` |
 | **Restart Game** | `R` | — | When Game Over |
 | **Quit** | `Q` | `Ctrl+C` | Anytime (auto-saves progress) |
+
+---
+
+## 📋 Main Menu & Settings Screen
+
+When running `snake` or `snake play` without flags, the game opens directly into the interactive **Main Menu & Settings** screen before gameplay starts:
+
+- **Start Game:** Press `Enter` on `[ ▶ START GAME ]` or press `Space` anywhere in the menu to start playing immediately.
+- **Resume Saved Game:** If an unfinished session was saved (via Boss Key `B` or Quit `Q`), the menu offers `[ ▶ RESUME SAVED GAME (Score: X) ]`.
+- **Adjust Settings:** Navigate with `↑`/`↓` and cycle `Mode`, `Difficulty`, `Obstacles`, and `Theme` with `←`/`→`.
+- **Direct Play (`--direct`):** Bypass the menu completely by passing `--direct` or any specific flags (e.g., `snake play --mode survival` or `snake -d hard`).

@@ -24,6 +24,7 @@ var (
 	playSpeed        int
 	playDifficulty   string
 	playHardwareUDP  string
+	playDirect       bool
 )
 
 var playCmd = &cobra.Command{
@@ -40,6 +41,19 @@ var playCmd = &cobra.Command{
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: could not load stats: %v\n", err)
 		}
+
+		// Detect if explicit options/flags were provided on CLI
+		hasExplicitFlags := cmd.Flags().Changed("mode") ||
+			cmd.Flags().Changed("difficulty") ||
+			cmd.Flags().Changed("speed") ||
+			cmd.Flags().Changed("obstacles") ||
+			cmd.Flags().Changed("seed") ||
+			cmd.Flags().Changed("theme") ||
+			cmd.Flags().Changed("screen-reader") ||
+			cmd.Flags().Changed("hardware-udp") ||
+			cmd.Flags().Changed("direct")
+
+		startInMenu := !playDirect && !hasExplicitFlags
 
 		// Mode resolution
 		mode := engine.ModeClassic
@@ -112,7 +126,7 @@ var playCmd = &cobra.Command{
 			}
 			game = engine.New(engineCfg)
 		}
-		model := renderer.NewUIModel(game, cfg, stats, theme)
+		model := renderer.NewUIModel(game, cfg, stats, theme, startInMenu)
 
 		if playHardwareUDP != "" {
 			hwChan := make(chan engine.Direction, 16)
@@ -150,5 +164,7 @@ func init() {
 	playCmd.Flags().IntVar(&playSpeed, "speed", 0, "Override tick speed in milliseconds (e.g. 150 for slower, 70 for faster)")
 	playCmd.Flags().StringVarP(&playDifficulty, "difficulty", "d", "", "Difficulty preset: easy, normal, hard, insane")
 	playCmd.Flags().StringVar(&playHardwareUDP, "hardware-udp", "", "Listen for ESP8266/ESP32 inputs on UDP addr (e.g. ':4242')")
+	playCmd.Flags().BoolVar(&playDirect, "direct", false, "Start game directly without showing the main menu")
 	rootCmd.AddCommand(playCmd)
+	rootCmd.Flags().AddFlagSet(playCmd.Flags())
 }

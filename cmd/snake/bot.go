@@ -88,7 +88,7 @@ var botCmd = &cobra.Command{
 			theme = cfg.Theme
 		}
 
-		model := renderer.NewUIModel(game, cfg, stats, theme)
+		model := renderer.NewUIModel(game, cfg, stats, theme, false)
 		model.IsBot = true
 		model.BotFunc = solver.NextMove
 

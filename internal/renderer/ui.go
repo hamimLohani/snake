@@ -39,10 +39,12 @@ type UIModel struct {
 	SelectedDifficulty int
 	SelectedTheme      int
 	SelectedObstacles  bool
+	IsInitialStart     bool
+	HasSaveGame        bool
 }
 
 // NewUIModel constructs an initialized Bubble Tea model.
-func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, themeName string) UIModel {
+func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, themeName string, startInMenu bool) UIModel {
 	th := GetTheme(themeName)
 	if themeName == "" {
 		th = GetTheme(cfg.Theme)
@@ -101,6 +103,11 @@ func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, them
 		SelectedDifficulty: diffIdx,
 		SelectedTheme:      themeIdx,
 		SelectedObstacles:  game.Config.WithObstacles,
+		InMenu:             startInMenu,
+		Paused:             startInMenu,
+		IsInitialStart:     startInMenu,
+		HasSaveGame:        storage.HasSaveGame(),
+		MenuIndex:          0,
 	}
 }
 
@@ -245,9 +252,14 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// In-Game Menu toggle (M or Tab)
 		if containsKey(m.Config.Keys.Menu, keyStr) || keyStr == "m" || keyStr == "M" || keyStr == "tab" {
+			if m.IsInitialStart {
+				// If at initial start, pressing M or Tab starts the game
+				return m, m.applyAndRestart()
+			}
 			m.InMenu = !m.InMenu
 			if m.InMenu {
 				m.Paused = true
+				m.MenuIndex = 0
 			} else if !m.Game.GameOver {
 				m.Paused = false
 			}
@@ -256,7 +268,12 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Handle Menu Navigation if InMenu is open
 		if m.InMenu {
+			hasSave := m.IsInitialStart && m.HasSaveGame
 			totalMenuRows := 6
+			if hasSave || !m.IsInitialStart {
+				totalMenuRows = 7
+			}
+
 			switch {
 			case containsKey(m.Config.Keys.Up, keyStr) || keyStr == "up" || keyStr == "w" || keyStr == "k":
 				m.MenuIndex = (m.MenuIndex - 1 + totalMenuRows) % totalMenuRows
@@ -265,31 +282,80 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.MenuIndex = (m.MenuIndex + 1) % totalMenuRows
 				return m, nil
 			case containsKey(m.Config.Keys.Left, keyStr) || keyStr == "left" || keyStr == "a" || keyStr == "h":
-				m.adjustMenuSetting(-1)
+				if sIdx := m.currentSettingIndex(); sIdx >= 0 {
+					m.adjustMenuSetting(-1, sIdx)
+				}
 				return m, nil
 			case containsKey(m.Config.Keys.Right, keyStr) || keyStr == "right" || keyStr == "d" || keyStr == "l":
-				m.adjustMenuSetting(1)
+				if sIdx := m.currentSettingIndex(); sIdx >= 0 {
+					m.adjustMenuSetting(1, sIdx)
+				}
 				return m, nil
 			case keyStr == "enter" || keyStr == " ":
-				if m.MenuIndex == 4 { // Apply & Start New Game
-					return m, m.applyAndRestart()
-				} else if m.MenuIndex == 5 { // Resume
-					m.InMenu = false
-					if !m.Game.GameOver {
-						m.Paused = false
+				if sIdx := m.currentSettingIndex(); sIdx >= 0 {
+					if keyStr == " " {
+						if m.IsInitialStart {
+							return m, m.applyAndRestart()
+						}
+						m.InMenu = false
+						if !m.Game.GameOver {
+							m.Paused = false
+						}
+						return m, nil
 					}
-					return m, nil
-				} else {
-					// Cycle setting forward on Enter
-					m.adjustMenuSetting(1)
+					m.adjustMenuSetting(1, sIdx)
 					return m, nil
 				}
+
+				if m.IsInitialStart {
+					if hasSave {
+						switch m.MenuIndex {
+						case 0: // Resume Saved Game
+							m.InMenu = false
+							m.Paused = false
+							m.IsInitialStart = false
+							return m, scheduleTick(m.Game.TickDuration())
+						case 1: // Start New Game
+							return m, m.applyAndRestart()
+						case 6: // Quit Game
+							return m, tea.Quit
+						}
+					} else {
+						switch m.MenuIndex {
+						case 0: // Start Game
+							return m, m.applyAndRestart()
+						case 5: // Quit Game
+							return m, tea.Quit
+						}
+					}
+				} else {
+					switch m.MenuIndex {
+					case 0: // Resume Current Game
+						m.InMenu = false
+						if !m.Game.GameOver {
+							m.Paused = false
+						}
+						return m, nil
+					case 5: // Apply & Restart New Game
+						return m, m.applyAndRestart()
+					case 6: // Quit Game
+						return m, tea.Quit
+					}
+				}
+				return m, nil
+
 			case keyStr == "esc" || keyStr == "p":
+				if m.IsInitialStart {
+					return m, m.applyAndRestart()
+				}
 				m.InMenu = false
 				if !m.Game.GameOver {
 					m.Paused = false
 				}
 				return m, nil
+
+			case keyStr == "q" || keyStr == "Q":
+				return m, tea.Quit
 			}
 			return m, nil
 		}
@@ -375,8 +441,21 @@ func (m UIModel) renderScreenReader() string {
 		m.Game.Config.Mode, m.Game.Score, len(m.Game.Snake), head.X, head.Y, m.Game.Food.X, m.Game.Food.Y, m.Game.Direction.String(), m.Game.GameOver)
 }
 
-func (m *UIModel) adjustMenuSetting(delta int) {
-	switch m.MenuIndex {
+func (m UIModel) currentSettingIndex() int {
+	if m.IsInitialStart && m.HasSaveGame {
+		if m.MenuIndex >= 2 && m.MenuIndex <= 5 {
+			return m.MenuIndex - 2
+		}
+		return -1
+	}
+	if m.MenuIndex >= 1 && m.MenuIndex <= 4 {
+		return m.MenuIndex - 1
+	}
+	return -1
+}
+
+func (m *UIModel) adjustMenuSetting(delta int, settingIdx int) {
+	switch settingIdx {
 	case 0: // Mode
 		totalModes := 4
 		m.SelectedMode = (m.SelectedMode + delta + totalModes) % totalModes
@@ -441,13 +520,15 @@ func (m *UIModel) applyAndRestart() tea.Cmd {
 	m.FinalRecorded = false
 	m.Paused = false
 	m.InMenu = false
+	m.IsInitialStart = false
+	m.HasSaveGame = false
 	m.RecordedMoves = make([]storage.ReplayStep, 0)
 	_ = storage.ClearSaveGame()
 
 	return scheduleTick(m.Game.TickDuration())
 }
 
-func (m UIModel) renderMenuOverlay() string {
+func (m UIModel) renderMenuScreen() string {
 	modes := []string{"CLASSIC", "TIME ATTACK", "SURVIVAL", "ZEN"}
 	diffs := []string{"EASY (160ms)", "NORMAL (110ms)", "HARD (75ms)", "INSANE (45ms)"}
 	themes := []string{"DARK", "LIGHT", "HIGH-CONTRAST", "COLORBLIND", "CORPORATE"}
@@ -462,10 +543,12 @@ func (m UIModel) renderMenuOverlay() string {
 	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true)
 	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#7f8c8d"))
 	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD600")).Bold(true)
+	titleStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF87")).Bold(true)
+	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#7928CA")).Bold(true)
 
 	formatRow := func(idx int, label, val string) string {
 		cursor := "  "
-		displayLabel := label
+		displayLabel := labelStyle.Render(label)
 		if m.MenuIndex == idx {
 			cursor = cursorStyle.Render("▶ ")
 			displayLabel = selectedStyle.Render(label)
@@ -476,37 +559,109 @@ func (m UIModel) renderMenuOverlay() string {
 			arrowL = selectedStyle.Render("◀ ")
 			arrowR = selectedStyle.Render(" ▶")
 		}
-		return fmt.Sprintf("%s%-13s %s%-15s%s", cursor, displayLabel, arrowL, valueStyle.Render(val), arrowR)
+		return fmt.Sprintf("%s%-14s %s%-16s%s", cursor, displayLabel, arrowL, valueStyle.Render(val), arrowR)
 	}
 
-	formatButton := func(idx int, text string) string {
+	formatButton := func(idx int, text string, primary bool) string {
 		cursor := "  "
 		var btnText string
 		if m.MenuIndex == idx {
 			cursor = cursorStyle.Render("▶ ")
-			btnText = selectedStyle.Render("[ " + text + " ]")
+			if primary {
+				btnText = lipgloss.NewStyle().
+					Background(lipgloss.Color("#00FF87")).
+					Foreground(lipgloss.Color("#000000")).
+					Bold(true).
+					Padding(0, 2).
+					Render(text)
+			} else {
+				btnText = selectedStyle.Render("[ " + text + " ]")
+			}
 		} else {
-			btnText = dimStyle.Render("[ " + text + " ]")
+			if primary {
+				btnText = lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#00FF87")).
+					Bold(true).
+					Render("[ " + text + " ]")
+			} else {
+				btnText = dimStyle.Render("[ " + text + " ]")
+			}
 		}
 		return fmt.Sprintf("%s%s", cursor, btnText)
 	}
 
-	lines := []string{
-		labelStyle.Render("         GAME SETTINGS & OPTIONS        "),
-		"",
-		formatRow(0, "Mode:", modes[m.SelectedMode]),
-		formatRow(1, "Difficulty:", diffs[m.SelectedDifficulty]),
-		formatRow(2, "Obstacles:", obsStr),
-		formatRow(3, "Theme:", themes[m.SelectedTheme]),
-		"",
-		formatButton(4, "Apply & Start New Game"),
-		formatButton(5, "Resume Current Game"),
-		"",
-		dimStyle.Render(" [↑/↓] Select   [←/→] Change   [Enter] Apply"),
+	var titleBanner string
+	var lines []string
+
+	hasSave := m.IsInitialStart && m.HasSaveGame
+
+	if m.IsInitialStart {
+		titleBanner = titleStyle.Render("🐍  S N A K E   C L I  🐍")
+		subBanner := headerStyle.Render("─── MAIN MENU & SETTINGS ───")
+		if hasSave {
+			lines = []string{
+				titleBanner,
+				subBanner,
+				"",
+				formatButton(0, fmt.Sprintf("▶ RESUME SAVED GAME (Score: %d)", m.Game.Score), true),
+				formatButton(1, "Start New Game", false),
+				"",
+				formatRow(2, "Mode:", modes[m.SelectedMode]),
+				formatRow(3, "Difficulty:", diffs[m.SelectedDifficulty]),
+				formatRow(4, "Obstacles:", obsStr),
+				formatRow(5, "Theme:", themes[m.SelectedTheme]),
+				"",
+				formatButton(6, "Quit Game", false),
+				"",
+				dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
+				dimStyle.Render(" [Enter] Select  •  [Space] Play Now  •  [Q] Quit"),
+			}
+		} else {
+			lines = []string{
+				titleBanner,
+				subBanner,
+				"",
+				formatButton(0, "▶ START GAME", true),
+				"",
+				formatRow(1, "Mode:", modes[m.SelectedMode]),
+				formatRow(2, "Difficulty:", diffs[m.SelectedDifficulty]),
+				formatRow(3, "Obstacles:", obsStr),
+				formatRow(4, "Theme:", themes[m.SelectedTheme]),
+				"",
+				formatButton(5, "Quit Game", false),
+				"",
+				dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
+				dimStyle.Render(" [Enter] Select  •  [Space] Play Now  •  [Q] Quit"),
+			}
+		}
+	} else {
+		titleBanner = titleStyle.Render("🐍  G A M E   P A U S E D  🐍")
+		subBanner := headerStyle.Render("─── SETTINGS & OPTIONS ───")
+		lines = []string{
+			titleBanner,
+			subBanner,
+			"",
+			formatButton(0, "▶ RESUME GAME", true),
+			"",
+			formatRow(1, "Mode:", modes[m.SelectedMode]),
+			formatRow(2, "Difficulty:", diffs[m.SelectedDifficulty]),
+			formatRow(3, "Obstacles:", obsStr),
+			formatRow(4, "Theme:", themes[m.SelectedTheme]),
+			"",
+			formatButton(5, "Apply & Restart New Game", false),
+			formatButton(6, "Quit Game", false),
+			"",
+			dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
+			dimStyle.Render(" [Enter] Select  •  [Esc / P] Resume  •  [Q] Quit"),
+		}
 	}
 
-	content := strings.Join(lines, "\n")
-	return m.Theme.ModalStyle.Render(content)
+	innerContent := strings.Join(lines, "\n")
+	w := (m.Game.Bounds.MaxX - m.Game.Bounds.MinX) * 2
+	h := m.Game.Bounds.MaxY - m.Game.Bounds.MinY
+
+	placed := lipgloss.Place(w, h, lipgloss.Center, lipgloss.Center, innerContent)
+	return m.Theme.BorderStyle.Render(placed)
 }
 
 func (m UIModel) renderRichGame() string {
@@ -594,9 +749,7 @@ func (m UIModel) renderRichGame() string {
 
 	// 3. Status Overlays
 	var statusOverlay string
-	if m.InMenu {
-		statusOverlay = m.renderMenuOverlay()
-	} else if m.Game.GameOver {
+	if m.Game.GameOver {
 		gameOverBox := m.Theme.ModalStyle.Render(fmt.Sprintf(
 			"╔═══════════════════════════════════╗\n"+
 				"║             GAME OVER             ║\n"+
@@ -629,10 +782,21 @@ func (m UIModel) renderRichGame() string {
 	footer := lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render(
 		"[W/A/S/D / Arrows] Move  •  [P] Pause  •  [M] Menu  •  [B] Boss Key  •  [R] Restart  •  [Q] Quit",
 	)
+	if m.InMenu {
+		footer = lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render(
+			"[↑/↓ / W/S] Navigate  •  [←/→ / A/D] Change Setting  •  [Enter / Space] Play  •  [Q] Quit",
+		)
+	}
 
 	// Combine components
 	var content string
-	if statusOverlay != "" {
+	if m.InMenu {
+		content = lipgloss.JoinVertical(lipgloss.Center,
+			hudRow,
+			m.renderMenuScreen(),
+			footer,
+		)
+	} else if statusOverlay != "" {
 		content = lipgloss.JoinVertical(lipgloss.Center,
 			hudRow,
 			borderedBoard,

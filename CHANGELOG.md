@@ -5,6 +5,14 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-10-15
+
+### Added
+- **Interactive Main Menu on Launch**: Running `snake` or `snake play` now opens directly into a sleek, full-screen **Main Menu & Settings** screen before gameplay starts.
+- **Instant Play / Skip Menu (`--direct`)**: Added `--direct` flag to bypass the main menu and begin playing immediately. Passing explicit configuration flags (e.g. `--mode`, `-d`, `--speed`, `--obstacles`, `--seed`) also bypasses the menu for immediate gameplay.
+- **Smart Saved-Game Resume**: When an unfinished game exists from a previous session or Boss Key exit, the menu prominently offers `[ ▶ RESUME SAVED GAME ]` with score preview, as well as `[ Start New Game ]`.
+- **Keyboard-First Menu UX**: Press `Enter` or `Space` anywhere in the start menu to start playing immediately. Use `Up`/`Down` (`W`/`S`) to navigate, `Left`/`Right` (`A`/`D`) to cycle options, and `Q` to quit.
+
 ## [1.0.2] - 2026-10-15
 
 ### Added

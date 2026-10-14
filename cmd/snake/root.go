@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	version = "1.0.2"
+	version = "1.0.3"
 	commit  = "none"
 	date    = "unknown"
 )
@@ -22,7 +22,7 @@ power-ups, boss key, replays, seed sharing, and customizable themes.`,
 	Version: fmt.Sprintf("%s (commit: %s, built: %s)", version, commit, date),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default to running 'snake play' if no subcommand is given
-		playCmd.Run(playCmd, args)
+		playCmd.Run(cmd, args)
 	},
 }
 

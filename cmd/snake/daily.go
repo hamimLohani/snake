@@ -52,7 +52,7 @@ var dailyCmd = &cobra.Command{
 		}
 
 		game := engine.New(engineCfg)
-		model := renderer.NewUIModel(game, cfg, stats, theme)
+		model := renderer.NewUIModel(game, cfg, stats, theme, false)
 
 		p := tea.NewProgram(
 			model,

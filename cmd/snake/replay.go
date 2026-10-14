@@ -82,7 +82,7 @@ var replayCmd = &cobra.Command{
 		}
 
 		// Interactive replay viewer
-		model := renderer.NewUIModel(game, cfg, stats, cfg.Theme)
+		model := renderer.NewUIModel(game, cfg, stats, cfg.Theme, false)
 		model.IsBot = true
 		model.BotFunc = func(g *engine.Game) engine.Direction {
 			if d, ok := stepMap[g.TickCount]; ok {
