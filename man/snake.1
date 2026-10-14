@@ -1,4 +1,4 @@
-.TH SNAKE 6 "October 2026" "snake 1.0.0" "Games Manual"
+.TH SNAKE 1 "October 2026" "snake 1.0.4" "User Commands"
 .SH NAME
 snake \- professional terminal snake game for developers
 .SH SYNOPSIS
@@ -7,6 +7,9 @@ snake \- professional terminal snake game for developers
 .br
 .B snake play
 [\fB\-\-mode\fR \fImode\fR]
+[\fB\-\-difficulty\fR \fIlevel\fR]
+[\fB\-\-size\fR \fIpreset|WxH\fR]
+[\fB\-\-direct\fR]
 [\fB\-\-seed\fR \fIN\fR]
 [\fB\-\-theme\fR \fIname\fR]
 [\fB\-\-obstacles\fR]
@@ -82,14 +85,20 @@ in your \fB$EDITOR\fR, or \fB\-\-reset\fR to revert to default settings.
 .BR \-m ", " \-\-mode " \fImode\fR"
 Select game mode: \fBclassic\fR (default), \fBtime\-attack\fR, \fBsurvival\fR, or \fBzen\fR.
 .TP
-.BR \-s ", " \-\-seed " \fIN\fR"
+.BR \-s ", " \-\-size " \fIpreset|WxH\fR"
+Select board dimensions preset: \fBsmall\fR (20×12), \fBmedium\fR (28×16), \fBclassic\fR (24×20, default), or \fBlarge\fR (36×20). Custom dimensions may also be passed as \fIWIDTHxHEIGHT\fR (e.g. \fI30x15\fR).
+.TP
+.BR \-d ", " \-\-difficulty " \fIlevel\fR"
+Select difficulty preset: \fBeasy\fR (160ms/tick), \fBnormal\fR (110ms/tick), \fBhard\fR (75ms/tick), or \fBinsane\fR (45ms/tick with procedural obstacles).
+.TP
+.B \-\-direct
+Bypass the interactive main menu and launch gameplay immediately.
+.TP
+.B \-\-seed " \fIN\fR"
 Initialize the pseudo-random number generator with a deterministic 64-bit integer seed.
 .TP
 .BR \-t ", " \-\-theme " \fIname\fR"
 Visual theme: \fBdark\fR (default neon), \fBlight\fR, \fBhigh\-contrast\fR, \fBcolorblind\fR, or \fBcorporate\fR.
-.TP
-.BR \-d ", " \-\-difficulty " \fIlevel\fR"
-Select difficulty preset: \fBeasy\fR (160ms/tick), \fBnormal\fR (110ms/tick), \fBhard\fR (75ms/tick), or \fBinsane\fR (45ms/tick with procedural obstacles).
 .TP
 .B \-\-obstacles
 Generate symmetrical or scattered procedural obstacles based on the seed.
@@ -120,6 +129,21 @@ Run the AI bot in headless non-interactive mode at maximum CPU speed.
 .TP
 .B \-\-ticks " \fIN\fR"
 Maximum number of ticks to simulate in headless bot mode (default 1500).
+
+.SH BOARD SIZES
+Snake CLI provides four curated board size presets tailored for different terminal pane configurations:
+.TP
+.B small (20×12 cells, 40×12 terminal chars)
+Compact layout designed for split panes, status bars, and small laptop windows.
+.TP
+.B medium (28×16 cells, 56×16 terminal chars)
+Balanced playground offering quick turnaround and brisk reflex dynamics.
+.TP
+.B classic (24×20 cells, 48×20 terminal chars)
+Authentic retro arcade aspect ratio. Default setting.
+.TP
+.B large (36×20 cells, 72×20 terminal chars)
+Expansive widescreen arena for extended runs, high scores, and massive snake lengths.
 
 .SH GAME MODES
 .TP

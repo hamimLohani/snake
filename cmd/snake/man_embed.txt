@@ -5,8 +5,9 @@ NAME
 
 SYNOPSIS
      snake [command] [options]
-     snake play [--mode mode] [--seed N] [--theme name] [--obstacles]
-     [--resume] [--speed ms] [--screen-reader] [--hardware-udp addr]
+     snake play [--mode mode] [--difficulty level] [--size preset|WxH]
+     [--direct] [--seed N] [--theme name] [--obstacles] [--resume] [--speed
+     ms] [--screen-reader] [--hardware-udp addr]
      snake daily [--theme name]
      snake stats [--json | --csv]
      snake replay [file] [--speed ms] [--verify]
@@ -64,17 +65,25 @@ OPTIONS
 	    Select game mode: classic (default), time-attack, survival, or
 	    zen.
 
-     -s, --seed N
+     -s, --size preset|WxH
+	    Select board dimensions preset: small (20×12), medium (28×16),
+	    classic (24×20, default), or large (36×20). Custom dimensions may
+	    also be passed as WIDTHxHEIGHT (e.g. 30x15).
+
+     -d, --difficulty level
+	    Select difficulty preset: easy (160ms/tick), normal (110ms/tick),
+	    hard (75ms/tick), or insane (45ms/tick with procedural obstacles).
+
+     --direct
+	    Bypass the interactive main menu and launch gameplay immediately.
+
+     --seed  N
 	    Initialize the pseudo-random number generator with a deterministic
 	    64-bit integer seed.
 
      -t, --theme name
 	    Visual theme: dark (default neon), light, high-contrast,
 	    colorblind, or corporate.
-
-     -d, --difficulty level
-	    Select difficulty preset: easy (160ms/tick), normal (110ms/tick),
-	    hard (75ms/tick), or insane (45ms/tick with procedural obstacles).
 
      --obstacles
 	    Generate symmetrical or scattered procedural obstacles based on
@@ -109,6 +118,26 @@ OPTIONS
      --ticks  N
 	    Maximum number of ticks to simulate in headless bot mode (default
 	    1500).
+
+
+BOARD SIZES
+     Snake CLI provides four curated board size presets tailored for different
+     terminal pane configurations:
+
+     small (20×12 cells, 40×12 terminal chars)
+	    Compact layout designed for split panes, status bars, and small
+	    laptop windows.
+
+     medium (28×16 cells, 56×16 terminal chars)
+	    Balanced playground offering quick turnaround and brisk reflex
+	    dynamics.
+
+     classic (24×20 cells, 48×20 terminal chars)
+	    Authentic retro arcade aspect ratio. Default setting.
+
+     large (36×20 cells, 72×20 terminal chars)
+	    Expansive widescreen arena for extended runs, high scores, and
+	    massive snake lengths.
 
 
 GAME MODES
@@ -247,4 +276,4 @@ AUTHORS
 SEE ALSO
      htop(1), curses(3)
 
-snake 1.0.0			 October 2026			      SNAKE(6)
+snake 1.0.4			 October 2026			      SNAKE(6)
