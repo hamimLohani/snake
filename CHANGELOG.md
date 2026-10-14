@@ -5,6 +5,16 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-10-15
+
+### Added
+- **Live Sample Board Preview in Main Menu**: The interactive menu now features a dynamic side-by-side **Sample Board Preview** that live-updates as settings are cycled:
+  - **Dynamic Sizing & Proportions**: The sample arena visually resizes and updates its dimensions badge across `SMALL (20×12)`, `MEDIUM (28×16)`, `CLASSIC (24×20)`, and `LARGE (36×20)` presets.
+  - **Theme Visualization**: Real-time rendering of the active theme's borders (rounded, normal, thick), color palettes, snake head/body glyphs, food, and bonus items (Dark, Light, High-Contrast, Colorblind-Safe, Corporate).
+  - **Obstacle Toggle Feedback**: Procedural obstacle blocks (`██`) appear in the sample arena when Obstacles are toggled `ON` and disappear when `OFF`.
+  - **Glyph Legend**: Instant reference showing exact Head, Body, Food, and Obstacle symbols.
+  - **Responsive Geometry**: Two-column layout fits within standard 80×24 terminal boundaries without scrolling, with automatic graceful fallback for narrow terminals.
+
 ## [1.0.3] - 2026-10-15
 
 ### Added

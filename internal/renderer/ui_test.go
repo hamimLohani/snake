@@ -213,3 +213,130 @@ func TestUIModel_QuitFromMenu(t *testing.T) {
 		t.Errorf("Expected quit command on 'q' press")
 	}
 }
+
+func TestUIModel_SampleBoardPreview_Rendering(t *testing.T) {
+	game := newTestGame()
+	cfg := storage.DefaultConfig()
+	stats := storage.NewStats()
+
+	model := NewUIModel(game, cfg, stats, "dark", true)
+	model.HasSaveGame = false
+	view := model.View()
+
+	if !strings.Contains(view, "SAMPLE BOARD PREVIEW") {
+		t.Errorf("Expected view to contain 'SAMPLE BOARD PREVIEW', got:\n%s", view)
+	}
+	if !strings.Contains(view, "CLASSIC (24×20)") {
+		t.Errorf("Expected view to contain 'CLASSIC (24×20)' in sample preview")
+	}
+	if !strings.Contains(view, "DARK") {
+		t.Errorf("Expected view to contain 'DARK' theme tag in sample preview")
+	}
+	if !strings.Contains(view, "Head:") || !strings.Contains(view, "Body:") || !strings.Contains(view, "Food:") {
+		t.Errorf("Expected view to contain glyph legend (Head, Body, Food)")
+	}
+}
+
+func TestUIModel_SampleBoardPreview_ThemeChanges(t *testing.T) {
+	game := newTestGame()
+	cfg := storage.DefaultConfig()
+	stats := storage.NewStats()
+
+	model := NewUIModel(game, cfg, stats, "dark", true)
+	model.HasSaveGame = false
+
+	// Navigate to Theme (Row 5 in start menu with no save: 0:Start, 1:Mode, 2:Diff, 3:Size, 4:Obs, 5:Theme)
+	for i := 0; i < 5; i++ {
+		newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyDown})
+		model = newModel.(UIModel)
+	}
+	if model.MenuIndex != 5 {
+		t.Fatalf("Expected MenuIndex 5, got %d", model.MenuIndex)
+	}
+
+	// themes: 0: dark, 1: light, 2: high-contrast, 3: colorblind, 4: corporate
+	expectedThemes := []string{"LIGHT", "HIGH-CONTRAST", "COLORBLIND", "CORPORATE", "DARK"}
+	for _, expected := range expectedThemes {
+		newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyRight})
+		model = newModel.(UIModel)
+		view := model.View()
+
+		if !strings.Contains(view, expected) {
+			t.Errorf("Expected preview to contain theme tag '%s'", expected)
+		}
+	}
+}
+
+func TestUIModel_SampleBoardPreview_SizeChanges(t *testing.T) {
+	game := newTestGame()
+	cfg := storage.DefaultConfig()
+	stats := storage.NewStats()
+
+	model := NewUIModel(game, cfg, stats, "dark", true)
+	model.HasSaveGame = false
+
+	// Navigate to Board Size (Row 3: 0:Start, 1:Mode, 2:Diff, 3:Size)
+	for i := 0; i < 3; i++ {
+		newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyDown})
+		model = newModel.(UIModel)
+	}
+	if model.MenuIndex != 3 {
+		t.Fatalf("Expected MenuIndex 3, got %d", model.MenuIndex)
+	}
+
+	// Board sizes: initial is Classic (idx 2). Right cycles to Large (idx 3).
+	newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model = newModel.(UIModel)
+	view := model.View()
+	if !strings.Contains(view, "LARGE (36×20)") {
+		t.Errorf("Expected preview to show LARGE (36×20)")
+	}
+
+	// Cycle to Small (idx 0)
+	newModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model = newModel.(UIModel)
+	view = model.View()
+	if !strings.Contains(view, "SMALL (20×12)") {
+		t.Errorf("Expected preview to show SMALL (20×12)")
+	}
+
+	// Cycle to Medium (idx 1)
+	newModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model = newModel.(UIModel)
+	view = model.View()
+	if !strings.Contains(view, "MEDIUM (28×16)") {
+		t.Errorf("Expected preview to show MEDIUM (28×16)")
+	}
+}
+
+func TestUIModel_SampleBoardPreview_ObstaclesToggle(t *testing.T) {
+	game := newTestGame()
+	cfg := storage.DefaultConfig()
+	stats := storage.NewStats()
+
+	model := NewUIModel(game, cfg, stats, "dark", true)
+	model.HasSaveGame = false
+
+	// Navigate to Obstacles (Row 4: 0:Start, 1:Mode, 2:Diff, 3:Size, 4:Obs)
+	for i := 0; i < 4; i++ {
+		newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyDown})
+		model = newModel.(UIModel)
+	}
+	if model.MenuIndex != 4 {
+		t.Fatalf("Expected MenuIndex 4, got %d", model.MenuIndex)
+	}
+
+	// Initially obstacles are false
+	viewBefore := model.View()
+	if strings.Contains(viewBefore, "Obs:██") {
+		t.Errorf("Expected preview NOT to contain 'Obs:██' when obstacles are OFF")
+	}
+
+	// Press Right to toggle Obstacles ON
+	newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model = newModel.(UIModel)
+	viewAfter := model.View()
+	if !strings.Contains(viewAfter, "Obs:██") {
+		t.Errorf("Expected preview to contain 'Obs:██' when obstacles are ON")
+	}
+}

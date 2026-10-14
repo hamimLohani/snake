@@ -558,6 +558,119 @@ func (m *UIModel) applyAndRestart() tea.Cmd {
 	return scheduleTick(m.Game.TickDuration())
 }
 
+func (m UIModel) renderSampleBoard() string {
+	preset := BoardSizePresets[m.SelectedSize]
+
+	var miniW, miniH int
+	switch m.SelectedSize {
+	case 0: // SMALL (20×12)
+		miniW, miniH = 10, 6
+	case 1: // MEDIUM (28×16)
+		miniW, miniH = 12, 7
+	case 2: // CLASSIC (24×20)
+		miniW, miniH = 11, 8
+	case 3: // LARGE (36×20)
+		miniW, miniH = 14, 8
+	default:
+		miniW = preset.Width / 2
+		if miniW < 10 {
+			miniW = 10
+		}
+		if miniW > 14 {
+			miniW = 14
+		}
+		miniH = preset.Height / 2
+		if miniH < 6 {
+			miniH = 6
+		}
+		if miniH > 8 {
+			miniH = 8
+		}
+	}
+
+	headX := miniW/2 + 1
+	headY := miniH/2 - 1
+	if headY < 1 {
+		headY = 1
+	}
+
+	bodyY := miniH / 2
+	foodX := miniW - 2
+	foodY := 1
+	powerX := 1
+	powerY := miniH - 2
+
+	emptyDot := lipgloss.NewStyle().Foreground(lipgloss.Color("#2a2a2a")).Render("· ")
+	if m.Theme.Name == "light" {
+		emptyDot = lipgloss.NewStyle().Foreground(lipgloss.Color("#b0bec5")).Render("· ")
+	} else if m.Theme.Name == "high-contrast" {
+		emptyDot = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555")).Render("· ")
+	} else if m.Theme.Name == "corporate" {
+		emptyDot = lipgloss.NewStyle().Foreground(lipgloss.Color("#444444")).Render("· ")
+	}
+
+	var gridBuilder strings.Builder
+	for y := 0; y < miniH; y++ {
+		for x := 0; x < miniW; x++ {
+			switch {
+			case x == headX && y == headY:
+				gridBuilder.WriteString(m.Theme.HeadStyle.Render(m.Theme.HeadGlyph("UP")))
+			case (x == miniW/2+1 && y == bodyY) || (x == miniW/2 && y == bodyY) || (x == miniW/2-1 && y == bodyY):
+				gridBuilder.WriteString(m.Theme.BodyStyle.Render(m.Theme.BodyGlyph))
+			case x == foodX && y == foodY:
+				gridBuilder.WriteString(m.Theme.FoodStyle.Render(m.Theme.FoodGlyph))
+			case x == powerX && y == powerY:
+				gridBuilder.WriteString(m.Theme.SlowMoStyle.Render(m.Theme.SlowMoGlyph))
+			case m.SelectedObstacles && ((x == miniW/2-2 && y == miniH/2-2) || (x == miniW/2+2 && y == miniH/2+1)):
+				gridBuilder.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render("██"))
+			default:
+				gridBuilder.WriteString(emptyDot)
+			}
+		}
+		if y < miniH-1 {
+			gridBuilder.WriteString("\n")
+		}
+	}
+
+	miniBoard := m.Theme.BorderStyle.Render(gridBuilder.String())
+
+	header := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#00E5FF")).
+		Bold(true).
+		Render("SAMPLE BOARD PREVIEW")
+
+	sizeTag := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFD600")).
+		Bold(true).
+		Render(fmt.Sprintf("%s • %d Cells", preset.Label, preset.Width*preset.Height))
+
+	themeTag := fmt.Sprintf("Theme: %s",
+		m.Theme.TitleStyle.Render("[ "+strings.ToUpper(m.Theme.Name)+" ]"),
+	)
+
+	legend := fmt.Sprintf("Head:%s Body:%s Food:%s",
+		m.Theme.HeadStyle.Render(m.Theme.HeadGlyph("UP")),
+		m.Theme.BodyStyle.Render(m.Theme.BodyGlyph),
+		m.Theme.FoodStyle.Render(m.Theme.FoodGlyph),
+	)
+	if m.SelectedObstacles {
+		legend += " " + lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render("Obs:██")
+	}
+
+	lines := []string{
+		header,
+		sizeTag,
+		miniBoard,
+		themeTag,
+		legend,
+	}
+
+	return lipgloss.NewStyle().
+		Width(34).
+		Align(lipgloss.Center).
+		Render(strings.Join(lines, "\n"))
+}
+
 func (m UIModel) renderMenuScreen() string {
 	modes := []string{"CLASSIC", "TIME ATTACK", "SURVIVAL", "ZEN"}
 	diffs := []string{"EASY (160ms)", "NORMAL (110ms)", "HARD (75ms)", "INSANE (45ms)"}
@@ -578,10 +691,10 @@ func (m UIModel) renderMenuScreen() string {
 
 	formatRow := func(idx int, label, val string) string {
 		cursor := "  "
-		displayLabel := labelStyle.Render(label)
+		displayLabel := labelStyle.Render(fmt.Sprintf("%-12s", label))
 		if m.MenuIndex == idx {
 			cursor = cursorStyle.Render("▶ ")
-			displayLabel = selectedStyle.Render(label)
+			displayLabel = selectedStyle.Render(fmt.Sprintf("%-12s", label))
 		}
 		arrowL := dimStyle.Render("◀ ")
 		arrowR := dimStyle.Render(" ▶")
@@ -589,7 +702,7 @@ func (m UIModel) renderMenuScreen() string {
 			arrowL = selectedStyle.Render("◀ ")
 			arrowR = selectedStyle.Render(" ▶")
 		}
-		return fmt.Sprintf("%s%-14s %s%-16s%s", cursor, displayLabel, arrowL, valueStyle.Render(val), arrowR)
+		return fmt.Sprintf("%s%s %s%s%s", cursor, displayLabel, arrowL, valueStyle.Render(fmt.Sprintf("%-15s", val)), arrowR)
 	}
 
 	formatButton := func(idx int, text string, primary bool) string {
@@ -621,19 +734,17 @@ func (m UIModel) renderMenuScreen() string {
 	}
 
 	var titleBanner string
-	var lines []string
+	var subBanner string
+	var leftLines []string
 
 	hasSave := m.IsInitialStart && m.HasSaveGame
 
 	if m.IsInitialStart {
 		titleBanner = titleStyle.Render("🐍  S N A K E   C L I  🐍")
-		subBanner := headerStyle.Render("─── MAIN MENU & SETTINGS ───")
+		subBanner = headerStyle.Render("─── MAIN MENU & SETTINGS ───")
 		if hasSave {
-			lines = []string{
-				titleBanner,
-				subBanner,
-				"",
-				formatButton(0, fmt.Sprintf("▶ RESUME SAVED GAME (Score: %d)", m.Game.Score), true),
+			leftLines = []string{
+				formatButton(0, fmt.Sprintf("RESUME SAVED GAME (Score: %d)", m.Game.Score), true),
 				formatButton(1, "Start New Game", false),
 				"",
 				formatRow(2, "Mode:", modes[m.SelectedMode]),
@@ -643,16 +754,10 @@ func (m UIModel) renderMenuScreen() string {
 				formatRow(6, "Theme:", themes[m.SelectedTheme]),
 				"",
 				formatButton(7, "Quit Game", false),
-				"",
-				dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
-				dimStyle.Render(" [Enter] Select  •  [Space] Play Now  •  [Q] Quit"),
 			}
 		} else {
-			lines = []string{
-				titleBanner,
-				subBanner,
-				"",
-				formatButton(0, "▶ START GAME", true),
+			leftLines = []string{
+				formatButton(0, "START GAME", true),
 				"",
 				formatRow(1, "Mode:", modes[m.SelectedMode]),
 				formatRow(2, "Difficulty:", diffs[m.SelectedDifficulty]),
@@ -661,19 +766,13 @@ func (m UIModel) renderMenuScreen() string {
 				formatRow(5, "Theme:", themes[m.SelectedTheme]),
 				"",
 				formatButton(6, "Quit Game", false),
-				"",
-				dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
-				dimStyle.Render(" [Enter] Select  •  [Space] Play Now  •  [Q] Quit"),
 			}
 		}
 	} else {
 		titleBanner = titleStyle.Render("🐍  G A M E   P A U S E D  🐍")
-		subBanner := headerStyle.Render("─── SETTINGS & OPTIONS ───")
-		lines = []string{
-			titleBanner,
-			subBanner,
-			"",
-			formatButton(0, "▶ RESUME GAME", true),
+		subBanner = headerStyle.Render("─── SETTINGS & OPTIONS ───")
+		leftLines = []string{
+			formatButton(0, "RESUME GAME", true),
 			"",
 			formatRow(1, "Mode:", modes[m.SelectedMode]),
 			formatRow(2, "Difficulty:", diffs[m.SelectedDifficulty]),
@@ -683,20 +782,62 @@ func (m UIModel) renderMenuScreen() string {
 			"",
 			formatButton(6, "Apply & Restart New Game", false),
 			formatButton(7, "Quit Game", false),
-			"",
-			dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting"),
-			dimStyle.Render(" [Enter] Select  •  [Esc / P] Resume  •  [Q] Quit"),
 		}
 	}
 
-	innerContent := strings.Join(lines, "\n")
-	w := (m.Game.Bounds.MaxX - m.Game.Bounds.MinX) * 2
-	if w < 64 {
-		w = 64
+	menuCol := lipgloss.NewStyle().Width(36).Render(strings.Join(leftLines, "\n"))
+	previewCol := m.renderSampleBoard()
+	twoCols := lipgloss.JoinHorizontal(lipgloss.Top, menuCol, "   ", previewCol)
+
+	var navHint1, navHint2 string
+	if m.IsInitialStart {
+		navHint1 = dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting")
+		navHint2 = dimStyle.Render(" [Enter] Select  •  [Space] Play Now  •  [Q] Quit")
+	} else {
+		navHint1 = dimStyle.Render(" [↑/↓] Navigate  •  [←/→] Change Setting")
+		navHint2 = dimStyle.Render(" [Enter] Select  •  [Esc / P] Resume  •  [Q] Quit")
 	}
-	h := m.Game.Bounds.MaxY - m.Game.Bounds.MinY
-	if h < 20 {
-		h = 20
+
+	var innerContent string
+	if m.TermWidth > 0 && m.TermWidth < 76 {
+		// Responsive fallback for very narrow terminals: stack compact view
+		compactPreview := fmt.Sprintf("%s • %s\nHead: %s  Body: %s  Food: %s",
+			lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD600")).Bold(true).Render(BoardSizePresets[m.SelectedSize].Label),
+			m.Theme.TitleStyle.Render("["+strings.ToUpper(m.Theme.Name)+"]"),
+			m.Theme.HeadStyle.Render(m.Theme.HeadGlyph("UP")),
+			m.Theme.BodyStyle.Render(m.Theme.BodyGlyph),
+			m.Theme.FoodStyle.Render(m.Theme.FoodGlyph),
+		)
+		innerContent = lipgloss.JoinVertical(lipgloss.Center,
+			titleBanner,
+			subBanner,
+			"",
+			strings.Join(leftLines, "\n"),
+			"",
+			compactPreview,
+			"",
+			navHint1,
+			navHint2,
+		)
+	} else {
+		innerContent = lipgloss.JoinVertical(lipgloss.Center,
+			titleBanner,
+			subBanner,
+			"",
+			twoCols,
+			"",
+			navHint1,
+			navHint2,
+		)
+	}
+
+	w := 76
+	if m.TermWidth > 80 {
+		w = m.TermWidth - 4
+	}
+	h := 18
+	if m.TermHeight > 24 {
+		h = m.TermHeight - 6
 	}
 
 	placed := lipgloss.Place(w, h, lipgloss.Center, lipgloss.Center, innerContent)
@@ -830,11 +971,14 @@ func (m UIModel) renderRichGame() string {
 	// Combine components
 	var content string
 	if m.InMenu {
-		content = lipgloss.JoinVertical(lipgloss.Center,
-			hudRow,
-			m.renderMenuScreen(),
-			footer,
-		)
+		if m.IsInitialStart {
+			content = m.renderMenuScreen()
+		} else {
+			content = lipgloss.JoinVertical(lipgloss.Center,
+				hudRow,
+				m.renderMenuScreen(),
+			)
+		}
 	} else if statusOverlay != "" {
 		content = lipgloss.JoinVertical(lipgloss.Center,
 			hudRow,

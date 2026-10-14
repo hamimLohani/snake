@@ -27,6 +27,7 @@
 - **Blazing Fast**: Sub-5ms startup, zero external runtime dependencies, 0-flicker double-buffered rendering.
 - **Terminal Safety**: Full alternate-screen buffer isolation; cleans up raw mode and restores terminal state on exit, SIGINT, or panic.
 - **Strictly Deterministic Engine**: Pure state machine with seeded PRNG; enables 100% reproducible replays, headless simulation, and automated verification.
+- **Interactive Main Menu & Live Sample Board**: Sleek two-column launch screen with dynamic live board preview for board sizes (Small, Medium, Classic, Large), visual themes, obstacles, and difficulty.
 - **4 Distinct Game Modes**: Classic, Time Attack, Survival (shrinking borders), and Zen (infinite wrap-around).
 - **Dynamic Power-Ups**: Slow-Mo, Ghost (pass through own body), 3x Score Multiplier, and Shrink.
 - **Discreet Boss Key**: Press `b` or `esc` to instantly swap the screen to a convincing fake `htop`, compiler build log, or `git log`.

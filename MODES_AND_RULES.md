@@ -229,9 +229,14 @@ $$\text{Points Earned} = \text{Base Points} \times \text{Active Multiplier}$$
 
 When running `snake` or `snake play` without flags, the game opens directly into the interactive **Main Menu & Settings** screen before gameplay starts:
 
-- **Start Game:** Press `Enter` on `[ ▶ START GAME ]` or press `Space` anywhere in the menu to start playing immediately.
-- **Resume Saved Game:** If an unfinished session was saved (via Boss Key `B` or Quit `Q`), the menu offers `[ ▶ RESUME SAVED GAME (Score: X) ]`.
+- **Start Game:** Press `Enter` on `[ START GAME ]` or press `Space` anywhere in the menu to start playing immediately.
+- **Resume Saved Game:** If an unfinished session was saved (via Boss Key `B` or Quit `Q`), the menu offers `[ RESUME SAVED GAME (Score: X) ]`.
 - **Adjust Settings:** Navigate with `↑`/`↓` and cycle `Mode`, `Difficulty`, `Board Size`, `Obstacles`, and `Theme` with `←`/`→`.
+- **Live Sample Board Preview:** As you adjust `Board Size`, `Theme`, or `Obstacles`, the right side of the menu live-renders an interactive sample arena:
+  - **Board Size & Proportions:** Dynamically scales the preview box between Small (20×12), Medium (28×16), Classic (24×20), and Large (36×20) with cell counts and aspect ratios.
+  - **Visual Theme:** Live-transforms arena borders (rounded, normal, thick), snake head/body colors and glyphs, food apple, and bonus items across Dark, Light, High-Contrast, Colorblind-Safe, and Corporate themes.
+  - **Procedural Obstacles:** Shows obstacle blocks (`██`) when Obstacles are toggled `ON` and hides them when `OFF`.
+  - **Glyph Legend:** Displays the exact in-game symbols for Head, Body, Food, and Obstacles.
 - **Direct Play (`--direct`):** Bypass the menu completely by passing `--direct` or any specific flags (e.g., `snake play --mode survival`, `snake -d hard`, or `snake --size large`).
 
 ---
