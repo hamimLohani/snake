@@ -14,6 +14,8 @@ import (
 
 type tickMsg time.Time
 
+type hardwareDirMsg engine.Direction
+
 // UIModel is the Bubble Tea model controlling the interactive game.
 type UIModel struct {
 	Game           *engine.Game
@@ -30,6 +32,7 @@ type UIModel struct {
 	IsBot          bool
 	BotFunc        func(g *engine.Game) engine.Direction
 	RecordedMoves  []storage.ReplayStep
+	HardwareChan   chan engine.Direction
 }
 
 // NewUIModel constructs an initialized Bubble Tea model.
@@ -60,9 +63,26 @@ func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, them
 
 // Init triggers the first tick schedule and tea subscriptions.
 func (m UIModel) Init() tea.Cmd {
-	return tea.Batch(
+	cmds := []tea.Cmd{
 		scheduleTick(m.Game.TickDuration()),
-	)
+	}
+	if m.HardwareChan != nil {
+		cmds = append(cmds, listenHardware(m.HardwareChan))
+	}
+	return tea.Batch(cmds...)
+}
+
+func listenHardware(ch chan engine.Direction) tea.Cmd {
+	return func() tea.Msg {
+		if ch == nil {
+			return nil
+		}
+		dir, ok := <-ch
+		if !ok {
+			return nil
+		}
+		return hardwareDirMsg(dir)
+	}
 }
 
 func scheduleTick(d time.Duration) tea.Cmd {
@@ -74,6 +94,17 @@ func scheduleTick(d time.Duration) tea.Cmd {
 // Update processes Bubble Tea events (ticks, keypresses, resize, blur).
 func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case hardwareDirMsg:
+		dir := engine.Direction(msg)
+		if !m.Paused && !m.Game.GameOver {
+			if m.Game.QueueDirection(dir) {
+				m.RecordedMoves = append(m.RecordedMoves, storage.ReplayStep{
+					Tick:      m.Game.TickCount,
+					Direction: dir,
+				})
+			}
+		}
+		return m, listenHardware(m.HardwareChan)
 	case tea.WindowSizeMsg:
 		m.TermWidth = msg.Width
 		m.TermHeight = msg.Height

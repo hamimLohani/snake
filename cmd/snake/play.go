@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"snake/internal/engine"
+	"snake/internal/input"
 	"snake/internal/renderer"
 	"snake/internal/storage"
 
@@ -21,6 +22,7 @@ var (
 	playResume       bool
 	playScreenReader bool
 	playSpeed        int
+	playHardwareUDP  string
 )
 
 var playCmd = &cobra.Command{
@@ -94,6 +96,19 @@ var playCmd = &cobra.Command{
 		}
 		model := renderer.NewUIModel(game, cfg, stats, theme)
 
+		if playHardwareUDP != "" {
+			hwChan := make(chan engine.Direction, 16)
+			stopHw := make(chan struct{})
+			defer close(stopHw)
+
+			listener := input.NewHardwareInputListener(playHardwareUDP)
+			if err := listener.StartUDP(hwChan, stopHw); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to start hardware listener: %v\n", err)
+			} else {
+				model.HardwareChan = hwChan
+			}
+		}
+
 		p := tea.NewProgram(
 			model,
 			tea.WithAltScreen(),
@@ -115,5 +130,6 @@ func init() {
 	playCmd.Flags().BoolVar(&playResume, "resume", true, "Auto-resume previous unfinished game if available")
 	playCmd.Flags().BoolVar(&playScreenReader, "screen-reader", false, "Accessible screen-reader output mode")
 	playCmd.Flags().IntVar(&playSpeed, "speed", 0, "Override tick speed in milliseconds (e.g. 150 for slower, 70 for faster)")
+	playCmd.Flags().StringVar(&playHardwareUDP, "hardware-udp", "", "Listen for ESP8266/ESP32 inputs on UDP addr (e.g. ':4242')")
 	rootCmd.AddCommand(playCmd)
 }
