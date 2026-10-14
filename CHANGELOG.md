@@ -5,6 +5,12 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-10-14
+
+### Added
+- **Difficulty Presets**: Added `--difficulty` (`-d`) flag supporting `easy` (160ms/tick), `normal` (110ms/tick), `hard` (75ms/tick), and `insane` (45ms/tick with procedural obstacles).
+- **Manual Pages**: Added troff/groff manual pages in Section 6 (`snake.6`) and Section 1 (`snake.1`), along with built-in `snake man` CLI pager.
+
 ## [1.0.0] - 2026-10-14
 
 ### Added
