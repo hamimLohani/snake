@@ -41,7 +41,7 @@
 
 ### Option 1: Homebrew (macOS & Linux)
 ```bash
-brew tap developer/snake
+brew tap hamimlohani/tap
 brew install snake
 ```
 
