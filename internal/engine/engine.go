@@ -71,6 +71,17 @@ func New(cfg Config) *Game {
 		snake[i] = Point{X: startX - i, Y: startY}
 	}
 
+	var obstacles map[Point]bool
+	if cfg.WithObstacles {
+		density := cfg.ObstacleDensity
+		if density <= 0 {
+			density = 0.05
+		}
+		obstacles = GenerateProceduralObstacles(cfg.Width, cfg.Height, cfg.Seed, density)
+	} else {
+		obstacles = make(map[Point]bool)
+	}
+
 	g := &Game{
 		Config:          cfg,
 		Snake:           snake,
@@ -84,7 +95,7 @@ func New(cfg Config) *Game {
 			MinY: 0,
 			MaxY: cfg.Height,
 		},
-		Obstacles:        make(map[Point]bool),
+		Obstacles:        obstacles,
 		RNG:              rng,
 		LastEvents:       make([]Event, 0),
 		TimeRemainingSec: 60, // 60s for time attack

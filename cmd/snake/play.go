@@ -14,9 +14,10 @@ import (
 )
 
 var (
-	playMode  string
-	playSeed  int64
-	playTheme string
+	playMode      string
+	playSeed      int64
+	playTheme     string
+	playObstacles bool
 )
 
 var playCmd = &cobra.Command{
@@ -68,6 +69,7 @@ var playCmd = &cobra.Command{
 			InitialSnakeLen: 3,
 			AdaptiveSpeed:   cfg.AdaptiveSpeed,
 			BaseTickRateMs:  cfg.BaseSpeedMs,
+			WithObstacles:   playObstacles,
 		}
 
 		game := engine.New(engineCfg)
@@ -90,5 +92,6 @@ func init() {
 	playCmd.Flags().StringVar(&playMode, "mode", "classic", "Game mode: classic, time-attack, survival, zen")
 	playCmd.Flags().Int64Var(&playSeed, "seed", 0, "Deterministic RNG seed (0 = random)")
 	playCmd.Flags().StringVar(&playTheme, "theme", "", "Visual theme: dark, light, high-contrast, colorblind, corporate")
+	playCmd.Flags().BoolVar(&playObstacles, "obstacles", false, "Generate procedural obstacles from seed")
 	rootCmd.AddCommand(playCmd)
 }

@@ -186,3 +186,104 @@ func TestGhostPowerUp(t *testing.T) {
 		t.Errorf("Ghost power-up should allow passing through own body without death")
 	}
 }
+
+func TestSurvivalModeShrinking(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Width = 30
+	cfg.Height = 30
+	cfg.Mode = ModeSurvival
+	cfg.Seed = 600
+
+	game := New(cfg)
+	initialWidth := game.Bounds.MaxX - game.Bounds.MinX
+
+	// Steer the snake in a safe 4x4 box loop: 4 Right, 4 Down, 4 Left, 4 Up
+	moves := []Direction{
+		DirRight, DirRight, DirRight, DirRight,
+		DirDown, DirDown, DirDown, DirDown,
+		DirLeft, DirLeft, DirLeft, DirLeft,
+		DirUp, DirUp, DirUp, DirUp,
+	}
+	for i := 0; i < 50; i++ {
+		game.QueueDirection(moves[i%len(moves)])
+		game.Tick()
+		if game.GameOver {
+			t.Fatalf("Game ended at tick %d: %s", i, game.GameOverReason)
+		}
+	}
+
+	newWidth := game.Bounds.MaxX - game.Bounds.MinX
+	if newWidth >= initialWidth {
+		t.Errorf("Expected survival bounds to shrink after 50 ticks, initial: %d, new: %d", initialWidth, newWidth)
+	}
+}
+
+func TestTimeAttackMode(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Width = 20
+	cfg.Height = 20
+	cfg.Mode = ModeTimeAttack
+	cfg.Seed = 700
+
+	game := New(cfg)
+	game.TimeRemainingSec = 1 // Set to 1 second remaining
+
+	// 10 ticks = 1 second
+	for i := 0; i < 10; i++ {
+		game.Tick()
+	}
+
+	if !game.GameOver {
+		t.Errorf("Expected game over when time runs out in Time Attack mode")
+	}
+	if game.GameOverReason != "Time is up!" {
+		t.Errorf("Expected 'Time is up!', got '%s'", game.GameOverReason)
+	}
+}
+
+func TestPowerUpEffects(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Width = 15
+	cfg.Height = 15
+	cfg.Seed = 800
+
+	// 1. Multiplier
+	game := New(cfg)
+	head := game.Snake[0]
+	game.Food = Point{X: head.X + 1, Y: head.Y}
+	game.FoodType = ItemMultiplier
+	game.Tick()
+
+	if game.ScoreMultiplier != 3 {
+		t.Errorf("Expected score multiplier 3, got %d", game.ScoreMultiplier)
+	}
+
+	// 2. Shrink
+	game2 := New(cfg)
+	// Artificially grow snake to 8 segments
+	for i := 0; i < 5; i++ {
+		game2.Snake = append(game2.Snake, Point{X: 1, Y: 1})
+	}
+	origLen := len(game2.Snake)
+	head2 := game2.Snake[0]
+	game2.Food = Point{X: head2.X + 1, Y: head2.Y}
+	game2.FoodType = ItemShrink
+	game2.Tick()
+
+	if len(game2.Snake) >= origLen {
+		t.Errorf("Expected snake length to shrink, was %d, now %d", origLen, len(game2.Snake))
+	}
+}
+
+func TestProceduralObstaclesDeterminism(t *testing.T) {
+	seed := int64(99999)
+	obs1 := GenerateProceduralObstacles(30, 20, seed, 0.08)
+	obs2 := GenerateProceduralObstacles(30, 20, seed, 0.08)
+
+	if len(obs1) == 0 {
+		t.Errorf("Expected obstacles to be generated")
+	}
+	if !reflect.DeepEqual(obs1, obs2) {
+		t.Errorf("Procedural obstacles must be identical for identical seed")
+	}
+}

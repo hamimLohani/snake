@@ -136,6 +136,8 @@ type Config struct {
 	InitialSnakeLen  int
 	AdaptiveSpeed    bool
 	BaseTickRateMs   int
+	WithObstacles    bool
+	ObstacleDensity  float64
 }
 
 // DefaultConfig provides sensible defaults.
@@ -148,5 +150,7 @@ func DefaultConfig() Config {
 		InitialSnakeLen: 3,
 		AdaptiveSpeed:   true,
 		BaseTickRateMs:  110,
+		WithObstacles:   false,
+		ObstacleDensity: 0.05,
 	}
 }
