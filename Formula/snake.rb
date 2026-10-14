@@ -10,6 +10,8 @@ class Snake < Formula
 
   def install
     system "go", "build", *std_go_args(ldflags: "-s -w -X main.version=#{version}"), "./cmd/snake"
+    man6.install "man/snake.6"
+    man1.install "man/snake.1"
   end
 
   test do

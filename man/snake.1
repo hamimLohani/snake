@@ -1,0 +1,243 @@
+.TH SNAKE 6 "October 2026" "snake 1.0.0" "Games Manual"
+.SH NAME
+snake \- professional terminal snake game for developers
+.SH SYNOPSIS
+.B snake
+[\fIcommand\fR] [\fIoptions\fR]
+.br
+.B snake play
+[\fB\-\-mode\fR \fImode\fR]
+[\fB\-\-seed\fR \fIN\fR]
+[\fB\-\-theme\fR \fIname\fR]
+[\fB\-\-obstacles\fR]
+[\fB\-\-resume\fR]
+[\fB\-\-speed\fR \fIms\fR]
+[\fB\-\-screen\-reader\fR]
+[\fB\-\-hardware\-udp\fR \fIaddr\fR]
+.br
+.B snake daily
+[\fB\-\-theme\fR \fIname\fR]
+.br
+.B snake stats
+[\fB\-\-json\fR | \fB\-\-csv\fR]
+.br
+.B snake replay
+[\fIfile\fR]
+[\fB\-\-speed\fR \fIms\fR]
+[\fB\-\-verify\fR]
+.br
+.B snake bot
+[\fB\-\-headless\fR]
+[\fB\-\-ticks\fR \fIN\fR]
+[\fB\-\-speed\fR \fIms\fR]
+[\fB\-\-seed\fR \fIN\fR]
+[\fB\-\-theme\fR \fIname\fR]
+.br
+.B snake config
+[\fB\-\-edit\fR | \fB\-\-reset\fR]
+.br
+.B snake \-\-version
+.br
+.B snake \-\-help
+
+.SH DESCRIPTION
+.B snake
+is a professional, developer-grade terminal Snake game engineered for coffee breaks.
+It installs in one command, launches in under 5 milliseconds, uses double-buffered
+flicker-free rendering with alternate-screen isolation, and restores the terminal state cleanly
+under all exit conditions.
+
+The underlying simulation engine is 100% deterministic, enabling shareable level seeds,
+recorded input playback, autonomous AI testing, and headless verification.
+
+.SH COMMANDS
+.TP
+.B play
+Start an interactive game of Snake. If no command is provided, \fBplay\fR is executed by default.
+.TP
+.B daily
+Play today's global Daily Challenge. The seed is deterministically generated from the current UTC date
+so that every player around the world encounters the exact same food spawns and procedural obstacles.
+.TP
+.B stats
+Display local lifetime metrics, high scores per mode, top 50 leaderboard entries, and unlocked achievements.
+Outputs can be formatted as JSON (\fB\-\-json\fR) or CSV (\fB\-\-csv\fR).
+.TP
+.B replay \fR[\fIfile\fR]
+Play back a recorded game file (.snk). If no file is specified, the latest recorded game
+at \fI~/.config/snake/replays/latest.snk\fR is loaded. Pass \fB\-\-verify\fR to run a headless determinism
+check that asserts the exact final score, length, and tick count match the recording.
+.TP
+.B bot
+Launch the autonomous AI autopilot using BFS pathfinding and tail-escape heuristics.
+In default visual mode, the AI plays itself on screen. In \fB\-\-headless\fR mode, the bot simulates
+up to 1,500 ticks at over 7,500 ticks per second for automated benchmarking and CI regression testing.
+.TP
+.B config
+Display the active configuration and key bindings. Use \fB\-\-edit\fR to open \fI~/.config/snake/config.toml\fR
+in your \fB$EDITOR\fR, or \fB\-\-reset\fR to revert to default settings.
+
+.SH OPTIONS
+.TP
+.BR \-m ", " \-\-mode " \fImode\fR"
+Select game mode: \fBclassic\fR (default), \fBtime\-attack\fR, \fBsurvival\fR, or \fBzen\fR.
+.TP
+.BR \-s ", " \-\-seed " \fIN\fR"
+Initialize the pseudo-random number generator with a deterministic 64-bit integer seed.
+.TP
+.BR \-t ", " \-\-theme " \fIname\fR"
+Visual theme: \fBdark\fR (default neon), \fBlight\fR, \fBhigh\-contrast\fR, \fBcolorblind\fR, or \fBcorporate\fR.
+.TP
+.B \-\-obstacles
+Generate symmetrical or scattered procedural obstacles based on the seed.
+.TP
+.B \-\-resume
+Automatically restore an unfinished game from \fI~/.config/snake/save.json\fR (default true).
+.TP
+.B \-\-speed " \fIms\fR"
+Override the tick interval in milliseconds (e.g. 150 for relaxed pace, 60 for fast-paced).
+.TP
+.B \-\-screen\-reader
+Enable accessible plain text stream mode for screen readers.
+.TP
+.B \-\-hardware\-udp " \fIaddr\fR"
+Listen on a UDP address (e.g. \fI:4242\fR) for directional packets sent by an external ESP8266 or ESP32 joystick.
+.TP
+.B \-\-json
+Export statistics and leaderboard as formatted JSON.
+.TP
+.B \-\-csv
+Export leaderboard records as comma-separated values.
+.TP
+.B \-\-verify
+Run headless determinism verification during replay playback.
+.TP
+.B \-\-headless
+Run the AI bot in headless non-interactive mode at maximum CPU speed.
+.TP
+.B \-\-ticks " \fIN\fR"
+Maximum number of ticks to simulate in headless bot mode (default 1500).
+
+.SH GAME MODES
+.TP
+.B classic
+Authentic Snake rules. Collisions with walls or the snake's own body result in Game Over.
+.TP
+.B time\-attack
+Begins with a 60-second countdown timer. Each food item consumed adds +3 seconds of bonus time and higher score points.
+The game ends when the timer reaches zero or a fatal collision occurs.
+.TP
+.B survival
+Dynamic shrinking arena. Every 50 ticks, the perimeter walls contract inward by 1 unit on each side.
+.TP
+.B zen
+Stress-free, meditative mode. Border collisions wrap around to the opposite side of the grid,
+and the snake passes harmlessly through its own body. No Game Over state is possible.
+
+.SH POWER-UPS
+During gameplay, special items appear on the grid in addition to standard food:
+.TP
+.B Slow-Mo (⏱)
+Halves snake movement speed for 60 ticks.
+.TP
+.B Ghost (👻)
+Allows the snake to phase through its own body segments without crashing for 50 ticks.
+.TP
+.B 3x Multiplier (⚡)
+Triples all points awarded for 70 ticks.
+.TP
+.B Shrink (✂)
+Immediately cuts the snake's length in half upon consumption.
+
+.SH THE BOSS KEY
+Pressing \fBb\fR or \fBEsc\fR instantly conceals the game and displays a convincing fake terminal screen:
+.IP \(bu 2
+\fBhtop\fR: Animated multi-core CPU meters, memory gauges, load averages, and realistic system process table.
+.IP \(bu 2
+\fBbuild\fR: Compiling target log stream and passing unit test runners.
+.IP \(bu 2
+\fBgit\fR: Decorated git commit graph and log history.
+.PP
+The game automatically pauses and preserves its exact state. Pressing \fBb\fR again immediately returns to the game.
+The default boss screen can be configured via \fIdefault_boss_screen\fR in \fIconfig.toml\fR.
+
+.SH KEYBINDINGS
+Default controls (customizable in \fI~/.config/snake/config.toml\fR):
+.TP
+.B Move Up
+Up Arrow, W, K
+.TP
+.B Move Down
+Down Arrow, S, J
+.TP
+.B Move Left
+Left Arrow, A, H
+.TP
+.B Move Right
+Right Arrow, D, L
+.TP
+.B Pause / Resume
+P, Space
+.TP
+.B Boss Key
+B, Esc
+.TP
+.B Restart
+R (when Game Over)
+.TP
+.B Quit
+Q, Ctrl+C
+
+.SH FILES
+.TP
+.I ~/.config/snake/config.toml
+User preferences, default theme, grid dimensions, and custom key bindings.
+.TP
+.I ~/.config/snake/stats.json
+Persistent player metrics, mode high scores, top 50 leaderboard, and unlocked achievements.
+.TP
+.I ~/.config/snake/save.json
+Auto-saved state of any in-progress game. Removed automatically upon game completion.
+.TP
+.I ~/.config/snake/replays/latest.snk
+Gzip-compressed recording of the most recently played game.
+
+.SH IOT HARDWARE CONTROLLER
+Snake supports external input via an ESP8266 or ESP32 microcontroller with an analog joystick.
+The controller transmits UDP datagrams to the host machine:
+.PP
+.nf
+.RS
+snake play --hardware-udp :4242
+.RE
+.fi
+.PP
+The protocol accepts 1-byte binary packets (0x01=UP, 0x02=DOWN, 0x03=LEFT, 0x04=RIGHT, 0x05=PAUSE, 0x06=BOSS)
+or newline-delimited ASCII strings ("UP\\n", "DOWN\\n", etc.).
+See \fIhardware/PROTOCOL.md\fR and \fIhardware/esp8266_snake.ino\fR for firmware and pinout instructions.
+
+.SH EXAMPLES
+.TP
+Play standard classic mode:
+.B snake play
+.TP
+Play survival mode with the colorblind-safe theme:
+.B snake play \-\-mode survival \-\-theme colorblind
+.TP
+Participate in today's daily challenge:
+.B snake daily
+.TP
+View local leaderboard and unlocked achievements:
+.B snake stats
+.TP
+Verify determinism of a recorded game replay:
+.B snake replay \-\-verify
+.TP
+Run headless AI benchmark for 1000 ticks:
+.B snake bot \-\-headless \-\-ticks 1000
+
+.SH AUTHORS
+Written and engineered by Senior Software Engineering Team.
+.SH SEE ALSO
+.BR htop (1),
+.BR curses (3)

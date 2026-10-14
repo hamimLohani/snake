@@ -1,0 +1,246 @@
+SNAKE(6)			 Games Manual			      SNAKE(6)
+
+NAME
+     snake - professional terminal snake game for developers
+
+SYNOPSIS
+     snake [command] [options]
+     snake play [--mode mode] [--seed N] [--theme name] [--obstacles]
+     [--resume] [--speed ms] [--screen-reader] [--hardware-udp addr]
+     snake daily [--theme name]
+     snake stats [--json | --csv]
+     snake replay [file] [--speed ms] [--verify]
+     snake bot [--headless] [--ticks N] [--speed ms] [--seed N] [--theme name]
+     snake config [--edit | --reset]
+     snake --version
+     snake --help
+
+
+DESCRIPTION
+     snake is a professional, developer-grade terminal Snake game engineered
+     for coffee breaks.  It installs in one command, launches in under 5
+     milliseconds, uses double-buffered flicker-free rendering with alternate-
+     screen isolation, and restores the terminal state cleanly under all exit
+     conditions.
+
+     The underlying simulation engine is 100% deterministic, enabling
+     shareable level seeds, recorded input playback, autonomous AI testing,
+     and headless verification.
+
+
+COMMANDS
+     play   Start an interactive game of Snake. If no command is provided,
+	    play is executed by default.
+
+     daily  Play today's global Daily Challenge. The seed is deterministically
+	    generated from the current UTC date so that every player around
+	    the world encounters the exact same food spawns and procedural
+	    obstacles.
+
+     stats  Display local lifetime metrics, high scores per mode, top 50
+	    leaderboard entries, and unlocked achievements.  Outputs can be
+	    formatted as JSON (--json) or CSV (--csv).
+
+     replay [file]
+	    Play back a recorded game file (.snk). If no file is specified,
+	    the latest recorded game at ~/.config/snake/replays/latest.snk is
+	    loaded. Pass --verify to run a headless determinism check that
+	    asserts the exact final score, length, and tick count match the
+	    recording.
+
+     bot    Launch the autonomous AI autopilot using BFS pathfinding and tail-
+	    escape heuristics.	In default visual mode, the AI plays itself on
+	    screen. In --headless mode, the bot simulates up to 1,500 ticks at
+	    over 7,500 ticks per second for automated benchmarking and CI
+	    regression testing.
+
+     config Display the active configuration and key bindings. Use --edit to
+	    open ~/.config/snake/config.toml in your $EDITOR, or --reset to
+	    revert to default settings.
+
+
+OPTIONS
+     -m, --mode mode
+	    Select game mode: classic (default), time-attack, survival, or
+	    zen.
+
+     -s, --seed N
+	    Initialize the pseudo-random number generator with a deterministic
+	    64-bit integer seed.
+
+     -t, --theme name
+	    Visual theme: dark (default neon), light, high-contrast,
+	    colorblind, or corporate.
+
+     --obstacles
+	    Generate symmetrical or scattered procedural obstacles based on
+	    the seed.
+
+     --resume
+	    Automatically restore an unfinished game from
+	    ~/.config/snake/save.json (default true).
+
+     --speed  ms
+	    Override the tick interval in milliseconds (e.g. 150 for relaxed
+	    pace, 60 for fast-paced).
+
+     --screen-reader
+	    Enable accessible plain text stream mode for screen readers.
+
+     --hardware-udp  addr
+	    Listen on a UDP address (e.g. :4242) for directional packets sent
+	    by an external ESP8266 or ESP32 joystick.
+
+     --json Export statistics and leaderboard as formatted JSON.
+
+     --csv  Export leaderboard records as comma-separated values.
+
+     --verify
+	    Run headless determinism verification during replay playback.
+
+     --headless
+	    Run the AI bot in headless non-interactive mode at maximum CPU
+	    speed.
+
+     --ticks  N
+	    Maximum number of ticks to simulate in headless bot mode (default
+	    1500).
+
+
+GAME MODES
+     classic
+	    Authentic Snake rules. Collisions with walls or the snake's own
+	    body result in Game Over.
+
+     time-attack
+	    Begins with a 60-second countdown timer. Each food item consumed
+	    adds +3 seconds of bonus time and higher score points.  The game
+	    ends when the timer reaches zero or a fatal collision occurs.
+
+     survival
+	    Dynamic shrinking arena. Every 50 ticks, the perimeter walls
+	    contract inward by 1 unit on each side.
+
+     zen    Stress-free, meditative mode. Border collisions wrap around to the
+	    opposite side of the grid, and the snake passes harmlessly through
+	    its own body. No Game Over state is possible.
+
+
+POWER-UPS
+     During gameplay, special items appear on the grid in addition to standard
+     food:
+
+     Slow-Mo (⏱)
+	    Halves snake movement speed for 60 ticks.
+
+     Ghost (👻
+	    Allows the snake to phase through its own body segments without
+	    crashing for 50 ticks.
+
+     3x Multiplier (⚡
+	    Triples all points awarded for 70 ticks.
+
+     Shrink (✂)
+	    Immediately cuts the snake's length in half upon consumption.
+
+
+THE BOSS KEY
+     Pressing b or Esc instantly conceals the game and displays a convincing
+     fake terminal screen:
+
+     • htop: Animated multi-core CPU meters, memory gauges, load averages, and
+       realistic system process table.
+
+     • build: Compiling target log stream and passing unit test runners.
+
+     • git: Decorated git commit graph and log history.
+
+     The game automatically pauses and preserves its exact state. Pressing b
+     again immediately returns to the game.  The default boss screen can be
+     configured via default_boss_screen in config.toml.
+
+
+KEYBINDINGS
+     Default controls (customizable in ~/.config/snake/config.toml):
+
+     Move Up
+	    Up Arrow, W, K
+
+     Move Down
+	    Down Arrow, S, J
+
+     Move Left
+	    Left Arrow, A, H
+
+     Move Right
+	    Right Arrow, D, L
+
+     Pause / Resume
+	    P, Space
+
+     Boss Key
+	    B, Esc
+
+     Restart
+	    R (when Game Over)
+
+     Quit   Q, Ctrl+C
+
+
+FILES
+     ~/.config/snake/config.toml
+	    User preferences, default theme, grid dimensions, and custom key
+	    bindings.
+
+     ~/.config/snake/stats.json
+	    Persistent player metrics, mode high scores, top 50 leaderboard,
+	    and unlocked achievements.
+
+     ~/.config/snake/save.json
+	    Auto-saved state of any in-progress game. Removed automatically
+	    upon game completion.
+
+     ~/.config/snake/replays/latest.snk
+	    Gzip-compressed recording of the most recently played game.
+
+
+IOT HARDWARE CONTROLLER
+     Snake supports external input via an ESP8266 or ESP32 microcontroller
+     with an analog joystick.  The controller transmits UDP datagrams to the
+     host machine:
+
+	    snake play --hardware-udp :4242
+
+     The protocol accepts 1-byte binary packets (0x01=UP, 0x02=DOWN,
+     0x03=LEFT, 0x04=RIGHT, 0x05=PAUSE, 0x06=BOSS) or newline-delimited ASCII
+     strings ("UP\n", "DOWN\n", etc.).	See hardware/PROTOCOL.md and
+     hardware/esp8266_snake.ino for firmware and pinout instructions.
+
+
+EXAMPLES
+     Play standard classic mode:
+	    snake play
+
+     Play survival mode with the colorblind-safe theme:
+	    snake play --mode survival --theme colorblind
+
+     Participate in today's daily challenge:
+	    snake daily
+
+     View local leaderboard and unlocked achievements:
+	    snake stats
+
+     Verify determinism of a recorded game replay:
+	    snake replay --verify
+
+     Run headless AI benchmark for 1000 ticks:
+	    snake bot --headless --ticks 1000
+
+
+AUTHORS
+     Written and engineered by Senior Software Engineering Team.
+
+SEE ALSO
+     htop(1), curses(3)
+
+snake 1.0.0			 October 2026			      SNAKE(6)
