@@ -1,10 +1,10 @@
 class Snake < Formula
   desc "Modern developer-grade terminal Snake game with replays and boss key"
-  homepage "https://github.com/developer/snake"
-  url "https://github.com/developer/snake/archive/refs/tags/v1.0.0.tar.gz"
+  homepage "https://github.com/hamimlohani/snake"
+  url "https://github.com/hamimlohani/snake/archive/refs/tags/v1.0.0.tar.gz"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   license "MIT"
-  head "https://github.com/developer/snake.git", branch: "main"
+  head "https://github.com/hamimlohani/snake.git", branch: "main"
 
   depends_on "go" => :build
 
