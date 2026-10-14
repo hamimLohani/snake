@@ -18,21 +18,27 @@ type hardwareDirMsg engine.Direction
 
 // UIModel is the Bubble Tea model controlling the interactive game.
 type UIModel struct {
-	Game           *engine.Game
-	Theme          Theme
-	Config         storage.Config
-	Stats          storage.Stats
-	TermWidth      int
-	TermHeight     int
-	Paused         bool
-	BossScreen     bool
-	BossType       string
-	StartTime      time.Time
-	FinalRecorded  bool
-	IsBot          bool
-	BotFunc        func(g *engine.Game) engine.Direction
-	RecordedMoves  []storage.ReplayStep
-	HardwareChan   chan engine.Direction
+	Game               *engine.Game
+	Theme              Theme
+	Config             storage.Config
+	Stats              storage.Stats
+	TermWidth          int
+	TermHeight         int
+	Paused             bool
+	BossScreen         bool
+	BossType           string
+	StartTime          time.Time
+	FinalRecorded      bool
+	IsBot              bool
+	BotFunc            func(g *engine.Game) engine.Direction
+	RecordedMoves      []storage.ReplayStep
+	HardwareChan       chan engine.Direction
+	InMenu             bool
+	MenuIndex          int
+	SelectedMode       int
+	SelectedDifficulty int
+	SelectedTheme      int
+	SelectedObstacles  bool
 }
 
 // NewUIModel constructs an initialized Bubble Tea model.
@@ -50,14 +56,51 @@ func NewUIModel(game *engine.Game, cfg storage.Config, stats storage.Stats, them
 	high := stats.HighScores[string(game.Config.Mode)]
 	game.Highscore = high
 
+	// Initial mode index
+	modes := []engine.Mode{engine.ModeClassic, engine.ModeTimeAttack, engine.ModeSurvival, engine.ModeZen}
+	modeIdx := 0
+	for i, m := range modes {
+		if m == game.Config.Mode {
+			modeIdx = i
+			break
+		}
+	}
+
+	// Initial difficulty index
+	diffIdx := 1 // normal
+	switch {
+	case game.Config.BaseTickRateMs <= 45:
+		diffIdx = 3 // insane
+	case game.Config.BaseTickRateMs <= 75:
+		diffIdx = 2 // hard
+	case game.Config.BaseTickRateMs <= 110:
+		diffIdx = 1 // normal
+	default:
+		diffIdx = 0 // easy
+	}
+
+	// Initial theme index
+	themes := []string{"dark", "light", "high-contrast", "colorblind", "corporate"}
+	themeIdx := 0
+	for i, t := range themes {
+		if t == th.Name {
+			themeIdx = i
+			break
+		}
+	}
+
 	return UIModel{
-		Game:          game,
-		Theme:         th,
-		Config:        cfg,
-		Stats:         stats,
-		BossType:      bossType,
-		StartTime:     time.Now(),
-		RecordedMoves: make([]storage.ReplayStep, 0),
+		Game:               game,
+		Theme:              th,
+		Config:             cfg,
+		Stats:              stats,
+		BossType:           bossType,
+		StartTime:          time.Now(),
+		RecordedMoves:      make([]storage.ReplayStep, 0),
+		SelectedMode:       modeIdx,
+		SelectedDifficulty: diffIdx,
+		SelectedTheme:      themeIdx,
+		SelectedObstacles:  game.Config.WithObstacles,
 	}
 }
 
@@ -200,6 +243,57 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
+		// In-Game Menu toggle (M or Tab)
+		if containsKey(m.Config.Keys.Menu, keyStr) || keyStr == "m" || keyStr == "M" || keyStr == "tab" {
+			m.InMenu = !m.InMenu
+			if m.InMenu {
+				m.Paused = true
+			} else if !m.Game.GameOver {
+				m.Paused = false
+			}
+			return m, nil
+		}
+
+		// Handle Menu Navigation if InMenu is open
+		if m.InMenu {
+			totalMenuRows := 6
+			switch {
+			case containsKey(m.Config.Keys.Up, keyStr) || keyStr == "up" || keyStr == "w" || keyStr == "k":
+				m.MenuIndex = (m.MenuIndex - 1 + totalMenuRows) % totalMenuRows
+				return m, nil
+			case containsKey(m.Config.Keys.Down, keyStr) || keyStr == "down" || keyStr == "s" || keyStr == "j":
+				m.MenuIndex = (m.MenuIndex + 1) % totalMenuRows
+				return m, nil
+			case containsKey(m.Config.Keys.Left, keyStr) || keyStr == "left" || keyStr == "a" || keyStr == "h":
+				m.adjustMenuSetting(-1)
+				return m, nil
+			case containsKey(m.Config.Keys.Right, keyStr) || keyStr == "right" || keyStr == "d" || keyStr == "l":
+				m.adjustMenuSetting(1)
+				return m, nil
+			case keyStr == "enter" || keyStr == " ":
+				if m.MenuIndex == 4 { // Apply & Start New Game
+					return m, m.applyAndRestart()
+				} else if m.MenuIndex == 5 { // Resume
+					m.InMenu = false
+					if !m.Game.GameOver {
+						m.Paused = false
+					}
+					return m, nil
+				} else {
+					// Cycle setting forward on Enter
+					m.adjustMenuSetting(1)
+					return m, nil
+				}
+			case keyStr == "esc" || keyStr == "p":
+				m.InMenu = false
+				if !m.Game.GameOver {
+					m.Paused = false
+				}
+				return m, nil
+			}
+			return m, nil
+		}
+
 		// Pause
 		if containsKey(m.Config.Keys.Pause, keyStr) {
 			if !m.Game.GameOver {
@@ -279,6 +373,140 @@ func (m UIModel) renderScreenReader() string {
 	head := m.Game.Snake[0]
 	return fmt.Sprintf("Snake CLI. Mode: %s. Score: %d. Length: %d. Head at (%d, %d). Food at (%d, %d). Direction: %s. Game Over: %t.\n",
 		m.Game.Config.Mode, m.Game.Score, len(m.Game.Snake), head.X, head.Y, m.Game.Food.X, m.Game.Food.Y, m.Game.Direction.String(), m.Game.GameOver)
+}
+
+func (m *UIModel) adjustMenuSetting(delta int) {
+	switch m.MenuIndex {
+	case 0: // Mode
+		totalModes := 4
+		m.SelectedMode = (m.SelectedMode + delta + totalModes) % totalModes
+	case 1: // Difficulty
+		totalDiffs := 4
+		m.SelectedDifficulty = (m.SelectedDifficulty + delta + totalDiffs) % totalDiffs
+		if m.SelectedDifficulty == 3 {
+			m.SelectedObstacles = true
+		}
+	case 2: // Obstacles
+		m.SelectedObstacles = !m.SelectedObstacles
+	case 3: // Theme
+		totalThemes := 5
+		m.SelectedTheme = (m.SelectedTheme + delta + totalThemes) % totalThemes
+		themes := []string{"dark", "light", "high-contrast", "colorblind", "corporate"}
+		m.Theme = GetTheme(themes[m.SelectedTheme])
+		m.Config.Theme = themes[m.SelectedTheme]
+	}
+}
+
+func (m *UIModel) applyAndRestart() tea.Cmd {
+	modes := []engine.Mode{engine.ModeClassic, engine.ModeTimeAttack, engine.ModeSurvival, engine.ModeZen}
+	chosenMode := modes[m.SelectedMode]
+
+	diffs := []string{"easy", "normal", "hard", "insane"}
+	chosenDiff := diffs[m.SelectedDifficulty]
+
+	var speed int
+	obstacles := m.SelectedObstacles
+	switch chosenDiff {
+	case "easy":
+		speed = 160
+	case "normal":
+		speed = 110
+	case "hard":
+		speed = 75
+	case "insane":
+		speed = 45
+		obstacles = true
+	}
+
+	themes := []string{"dark", "light", "high-contrast", "colorblind", "corporate"}
+	chosenTheme := themes[m.SelectedTheme]
+	m.Theme = GetTheme(chosenTheme)
+	m.Config.Theme = chosenTheme
+
+	seed := time.Now().UnixNano()
+	cfg := engine.Config{
+		Width:           m.Config.GridWidth,
+		Height:          m.Config.GridHeight,
+		Mode:            chosenMode,
+		Seed:            seed,
+		InitialSnakeLen: 3,
+		AdaptiveSpeed:   m.Config.AdaptiveSpeed,
+		BaseTickRateMs:  speed,
+		WithObstacles:   obstacles,
+	}
+
+	m.Game = engine.New(cfg)
+	m.Game.Highscore = m.Stats.HighScores[string(chosenMode)]
+	m.StartTime = time.Now()
+	m.FinalRecorded = false
+	m.Paused = false
+	m.InMenu = false
+	m.RecordedMoves = make([]storage.ReplayStep, 0)
+	_ = storage.ClearSaveGame()
+
+	return scheduleTick(m.Game.TickDuration())
+}
+
+func (m UIModel) renderMenuOverlay() string {
+	modes := []string{"CLASSIC", "TIME ATTACK", "SURVIVAL", "ZEN"}
+	diffs := []string{"EASY (160ms)", "NORMAL (110ms)", "HARD (75ms)", "INSANE (45ms)"}
+	themes := []string{"DARK", "LIGHT", "HIGH-CONTRAST", "COLORBLIND", "CORPORATE"}
+
+	obsStr := "OFF"
+	if m.SelectedObstacles {
+		obsStr = "ON"
+	}
+
+	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00E5FF")).Bold(true)
+	cursorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF87")).Bold(true)
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true)
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#7f8c8d"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD600")).Bold(true)
+
+	formatRow := func(idx int, label, val string) string {
+		cursor := "  "
+		displayLabel := label
+		if m.MenuIndex == idx {
+			cursor = cursorStyle.Render("▶ ")
+			displayLabel = selectedStyle.Render(label)
+		}
+		arrowL := dimStyle.Render("◀ ")
+		arrowR := dimStyle.Render(" ▶")
+		if m.MenuIndex == idx {
+			arrowL = selectedStyle.Render("◀ ")
+			arrowR = selectedStyle.Render(" ▶")
+		}
+		return fmt.Sprintf("%s%-13s %s%-15s%s", cursor, displayLabel, arrowL, valueStyle.Render(val), arrowR)
+	}
+
+	formatButton := func(idx int, text string) string {
+		cursor := "  "
+		var btnText string
+		if m.MenuIndex == idx {
+			cursor = cursorStyle.Render("▶ ")
+			btnText = selectedStyle.Render("[ " + text + " ]")
+		} else {
+			btnText = dimStyle.Render("[ " + text + " ]")
+		}
+		return fmt.Sprintf("%s%s", cursor, btnText)
+	}
+
+	lines := []string{
+		labelStyle.Render("         GAME SETTINGS & OPTIONS        "),
+		"",
+		formatRow(0, "Mode:", modes[m.SelectedMode]),
+		formatRow(1, "Difficulty:", diffs[m.SelectedDifficulty]),
+		formatRow(2, "Obstacles:", obsStr),
+		formatRow(3, "Theme:", themes[m.SelectedTheme]),
+		"",
+		formatButton(4, "Apply & Start New Game"),
+		formatButton(5, "Resume Current Game"),
+		"",
+		dimStyle.Render(" [↑/↓] Select   [←/→] Change   [Enter] Apply"),
+	}
+
+	content := strings.Join(lines, "\n")
+	return m.Theme.ModalStyle.Render(content)
 }
 
 func (m UIModel) renderRichGame() string {
@@ -366,7 +594,9 @@ func (m UIModel) renderRichGame() string {
 
 	// 3. Status Overlays
 	var statusOverlay string
-	if m.Game.GameOver {
+	if m.InMenu {
+		statusOverlay = m.renderMenuOverlay()
+	} else if m.Game.GameOver {
 		gameOverBox := m.Theme.ModalStyle.Render(fmt.Sprintf(
 			"╔═══════════════════════════════════╗\n"+
 				"║             GAME OVER             ║\n"+
@@ -374,7 +604,9 @@ func (m UIModel) renderRichGame() string {
 				"║  Final Score: %-19d ║\n"+
 				"║  Length:      %-19d ║\n"+
 				"║                                   ║\n"+
-				"║  [R] Restart    [Q] Quit          ║\n"+
+				"║  [R] Restart                      ║\n"+
+				"║  [M] Change Mode / Difficulty     ║\n"+
+				"║  [Q] Quit                         ║\n"+
 				"╚═══════════════════════════════════╝",
 			m.Game.GameOverReason, m.Game.Score, len(m.Game.Snake),
 		))
@@ -384,9 +616,10 @@ func (m UIModel) renderRichGame() string {
 			"╔═══════════════════════════════════╗\n" +
 				"║              PAUSED               ║\n" +
 				"║                                   ║\n" +
-				"║    Press [P] or Space to resume   ║\n" +
-				"║    Press [B] for Boss Screen      ║\n" +
-				"║    Press [Q] to quit              ║\n" +
+				"║  Press [P] or Space to resume     ║\n" +
+				"║  Press [M] for Mode & Difficulty  ║\n" +
+				"║  Press [B] for Boss Screen        ║\n" +
+				"║  Press [Q] to quit                ║\n" +
 				"╚═══════════════════════════════════╝",
 		)
 		statusOverlay = pauseBox
@@ -394,7 +627,7 @@ func (m UIModel) renderRichGame() string {
 
 	// 4. Instructions Footer
 	footer := lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render(
-		"[W/A/S/D / Arrows] Move  •  [P] Pause  •  [B] Boss Key  •  [R] Restart  •  [Q] Quit",
+		"[W/A/S/D / Arrows] Move  •  [P] Pause  •  [M] Menu  •  [B] Boss Key  •  [R] Restart  •  [Q] Quit",
 	)
 
 	// Combine components

@@ -15,6 +15,7 @@ type KeyConfig struct {
 	Left    []string `toml:"left"`
 	Right   []string `toml:"right"`
 	Pause   []string `toml:"pause"`
+	Menu    []string `toml:"menu"`
 	Boss    []string `toml:"boss"`
 	Restart []string `toml:"restart"`
 	Quit    []string `toml:"quit"`
@@ -48,6 +49,7 @@ func DefaultConfig() Config {
 			Left:    []string{"left", "a", "h"},
 			Right:   []string{"right", "d", "l"},
 			Pause:   []string{"p", " "},
+			Menu:    []string{"m", "tab"},
 			Boss:    []string{"b", "esc"},
 			Restart: []string{"r"},
 			Quit:    []string{"q", "ctrl+c"},
@@ -92,6 +94,10 @@ func LoadConfig() (Config, error) {
 
 	if err := toml.Unmarshal(data, &cfg); err != nil {
 		return cfg, err
+	}
+
+	if len(cfg.Keys.Menu) == 0 {
+		cfg.Keys.Menu = []string{"m", "tab"}
 	}
 
 	return cfg, nil
