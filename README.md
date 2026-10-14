@@ -1,7 +1,8 @@
 # 🐍 snake — Developer-Grade Terminal Snake CLI
 
-[![CI](https://github.com/developer/snake/actions/workflows/ci.yml/badge.svg)](https://github.com/developer/snake/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/developer/snake)](https://goreportcard.com/report/github.com/developer/snake)
+[![Release](https://img.shields.io/github/v/release/hamimLohani/snake?color=brightgreen)](https://github.com/hamimLohani/snake/releases)
+[![CI](https://github.com/hamimLohani/snake/actions/workflows/ci.yml/badge.svg)](https://github.com/hamimLohani/snake/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hamimLohani/snake)](https://goreportcard.com/report/github.com/hamimLohani/snake)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > **A coffee-break game for developers.** Installs in one command, launches instantly, looks polished in any terminal, and built to business-grade engineering standards.
