@@ -72,6 +72,10 @@ OPTIONS
 	    Visual theme: dark (default neon), light, high-contrast,
 	    colorblind, or corporate.
 
+     -d, --difficulty level
+	    Select difficulty preset: easy (160ms/tick), normal (110ms/tick),
+	    hard (75ms/tick), or insane (45ms/tick with procedural obstacles).
+
      --obstacles
 	    Generate symmetrical or scattered procedural obstacles based on
 	    the seed.

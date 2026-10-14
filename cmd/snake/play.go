@@ -22,6 +22,7 @@ var (
 	playResume       bool
 	playScreenReader bool
 	playSpeed        int
+	playDifficulty   string
 	playHardwareUDP  string
 )
 
@@ -64,6 +65,23 @@ var playCmd = &cobra.Command{
 		theme := playTheme
 		if theme == "" {
 			theme = cfg.Theme
+		}
+
+		switch playDifficulty {
+		case "easy":
+			cfg.BaseSpeedMs = 160
+		case "normal", "medium":
+			cfg.BaseSpeedMs = 110
+		case "hard":
+			cfg.BaseSpeedMs = 75
+		case "insane":
+			cfg.BaseSpeedMs = 45
+			playObstacles = true
+		case "":
+			// Keep existing or config speed
+		default:
+			fmt.Fprintf(os.Stderr, "Unknown difficulty '%s'. Valid options: easy, normal, hard, insane\n", playDifficulty)
+			os.Exit(1)
 		}
 
 		if playSpeed > 0 {
@@ -130,6 +148,7 @@ func init() {
 	playCmd.Flags().BoolVar(&playResume, "resume", true, "Auto-resume previous unfinished game if available")
 	playCmd.Flags().BoolVar(&playScreenReader, "screen-reader", false, "Accessible screen-reader output mode")
 	playCmd.Flags().IntVar(&playSpeed, "speed", 0, "Override tick speed in milliseconds (e.g. 150 for slower, 70 for faster)")
+	playCmd.Flags().StringVarP(&playDifficulty, "difficulty", "d", "", "Difficulty preset: easy, normal, hard, insane")
 	playCmd.Flags().StringVar(&playHardwareUDP, "hardware-udp", "", "Listen for ESP8266/ESP32 inputs on UDP addr (e.g. ':4242')")
 	rootCmd.AddCommand(playCmd)
 }
