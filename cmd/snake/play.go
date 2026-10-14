@@ -14,10 +14,13 @@ import (
 )
 
 var (
-	playMode      string
-	playSeed      int64
-	playTheme     string
-	playObstacles bool
+	playMode         string
+	playSeed         int64
+	playTheme        string
+	playObstacles    bool
+	playResume       bool
+	playScreenReader bool
+	playSpeed        int
 )
 
 var playCmd = &cobra.Command{
@@ -61,18 +64,34 @@ var playCmd = &cobra.Command{
 			theme = cfg.Theme
 		}
 
-		engineCfg := engine.Config{
-			Width:           cfg.GridWidth,
-			Height:          cfg.GridHeight,
-			Mode:            mode,
-			Seed:            seed,
-			InitialSnakeLen: 3,
-			AdaptiveSpeed:   cfg.AdaptiveSpeed,
-			BaseTickRateMs:  cfg.BaseSpeedMs,
-			WithObstacles:   playObstacles,
+		if playSpeed > 0 {
+			cfg.BaseSpeedMs = playSpeed
+		}
+		if playScreenReader {
+			cfg.ScreenReader = true
 		}
 
-		game := engine.New(engineCfg)
+		var game *engine.Game
+		if playResume && storage.HasSaveGame() {
+			savedGame, err := storage.LoadSavedGame()
+			if err == nil {
+				game = savedGame
+			}
+		}
+
+		if game == nil {
+			engineCfg := engine.Config{
+				Width:           cfg.GridWidth,
+				Height:          cfg.GridHeight,
+				Mode:            mode,
+				Seed:            seed,
+				InitialSnakeLen: 3,
+				AdaptiveSpeed:   cfg.AdaptiveSpeed,
+				BaseTickRateMs:  cfg.BaseSpeedMs,
+				WithObstacles:   playObstacles,
+			}
+			game = engine.New(engineCfg)
+		}
 		model := renderer.NewUIModel(game, cfg, stats, theme)
 
 		p := tea.NewProgram(
@@ -93,5 +112,8 @@ func init() {
 	playCmd.Flags().Int64Var(&playSeed, "seed", 0, "Deterministic RNG seed (0 = random)")
 	playCmd.Flags().StringVar(&playTheme, "theme", "", "Visual theme: dark, light, high-contrast, colorblind, corporate")
 	playCmd.Flags().BoolVar(&playObstacles, "obstacles", false, "Generate procedural obstacles from seed")
+	playCmd.Flags().BoolVar(&playResume, "resume", true, "Auto-resume previous unfinished game if available")
+	playCmd.Flags().BoolVar(&playScreenReader, "screen-reader", false, "Accessible screen-reader output mode")
+	playCmd.Flags().IntVar(&playSpeed, "speed", 0, "Override tick speed in milliseconds (e.g. 150 for slower, 70 for faster)")
 	rootCmd.AddCommand(playCmd)
 }

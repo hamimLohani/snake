@@ -110,6 +110,7 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					DurationSec: duration,
 				})
 				_ = storage.SaveStats(m.Stats)
+				_ = storage.ClearSaveGame()
 			}
 			return m, nil
 		}
@@ -139,6 +140,7 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.BossScreen = !m.BossScreen
 			if m.BossScreen {
 				m.Paused = true
+				_ = storage.SaveActiveGame(m.Game)
 			}
 			return m, nil
 		}
@@ -151,6 +153,9 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Quit
 		if containsKey(m.Config.Keys.Quit, keyStr) || keyStr == "ctrl+c" {
+			if !m.Game.GameOver {
+				_ = storage.SaveActiveGame(m.Game)
+			}
 			return m, tea.Quit
 		}
 
