@@ -5,6 +5,16 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-10-15
+
+### Added
+- **5-Second Calibrated Durations**: All power-up active durations (`Slow-Mo`, `Ghost Mode`, `3× Multiplier`), board despawn lifespans, and toxic speed surges are calibrated to exactly **5.0 seconds** via `TicksForDuration(5 * time.Second)`.
+- **Multiple Simultaneous Foods**: The arena now continuously maintains multiple permanent food apples (default 3) on the board simultaneously. Consuming any apple immediately replenishes another so food is always abundant.
+- **Concurrent Extra Items & Guaranteed Poison Hazard**: A positive power-up and a negative poison hazard apple (`☠`) coexist concurrently alongside multiple permanent food apples at all times (5 total items active).
+- **HUD Live Countdown**: Replaced raw tick count with a real-time countdown in seconds (`Slow-Mo 5.0s`, `⚠️ POISON 5.0s`, `Ghost 4.8s`).
+- **AI Autopilot Multiple-Food Pathfinding**: BFS bot solver dynamically scans all active food apples and power-ups to pursue the shortest safe path while actively steering around all negative poison hazard cells.
+- **Save State Multi-Item Serialization**: `savegame.go` now serializes and restores the full slice of multiple concurrent food and hazard items.
+
 ## [1.0.5] - 2026-10-15
 
 ### Added

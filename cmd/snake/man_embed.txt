@@ -159,22 +159,32 @@ GAME MODES
 	    its own body. No Game Over state is possible.
 
 
-POWER-UPS
-     During gameplay, special items appear on the grid in addition to standard
-     food:
+POWER-UPS & SPECIAL ITEMS
+     Multiple permanent food apples co-exist on the grid and respawn continuously
+     one after another. Concurrently alongside food, positive power-ups and
+     hazardous poison items appear on the grid (active effects and board lifespans
+     last 5.0 seconds):
+
+     Permanent Food (Multiple)
+	    Standard food apples that award points and grow snake length.
+	    Multiple apples are active simultaneously and respawn continuously.
 
      Slow-Mo (⏱)
-	    Halves snake movement speed for 60 ticks.
+	    Halves snake movement speed for 5.0 seconds.
 
-     Ghost (👻
+     Ghost (👻)
 	    Allows the snake to phase through its own body segments without
-	    crashing for 50 ticks.
+	    crashing for 5.0 seconds.
 
-     3x Multiplier (⚡
-	    Triples all points awarded for 70 ticks.
+     3x Multiplier (⚡)
+	    Triples all points awarded for 5.0 seconds.
 
      Shrink (✂)
 	    Immediately cuts the snake's length in half upon consumption.
+
+     Poison (☠) [Hazard - Avoid!]
+	    Deducts -30 points, adds +1 unrewarded length, and triggers an
+	    uncontrollable 5.0-second Toxic Speed Surge (2x speed)!
 
 
 THE BOSS KEY
@@ -276,4 +286,4 @@ AUTHORS
 SEE ALSO
      htop(1), curses(3)
 
-snake 1.0.5			 October 2026			      SNAKE(6)
+snake 1.0.6			 October 2026			      SNAKE(6)

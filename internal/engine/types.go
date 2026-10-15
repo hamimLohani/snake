@@ -107,6 +107,13 @@ func (it ItemType) String() string {
 	}
 }
 
+// FoodItem represents an individual item on the board with its position, type, and optional expiration tick.
+type FoodItem struct {
+	Point         Point    `json:"point"`
+	Type          ItemType `json:"type"`
+	ExpiresAtTick uint64   `json:"expires_at_tick,omitempty"` // 0 if permanent
+}
+
 // EventType defines events emitted by the engine during a tick.
 type EventType int
 

@@ -19,13 +19,31 @@ func (b *BotSolver) NextMove(g *engine.Game) engine.Direction {
 	}
 
 	head := g.Snake[0]
-	food := g.Food
 	tail := g.Snake[len(g.Snake)-1]
 
-	// 1. Try finding safe path to food
-	pathToFood := b.findPathBFS(g, head, food)
-	if len(pathToFood) > 0 {
-		nextStep := pathToFood[0]
+	// 1. Try finding safe path to food (support multiple foods and beneficial power-ups)
+	var foodTargets []engine.Point
+	for _, item := range g.FoodItems {
+		if item.Type != engine.ItemPoison {
+			foodTargets = append(foodTargets, item.Point)
+		}
+	}
+	if len(foodTargets) == 0 {
+		foodTargets = append(foodTargets, g.Food)
+	}
+
+	var shortestPathToFood []engine.Point
+	for _, target := range foodTargets {
+		path := b.findPathBFS(g, head, target)
+		if len(path) > 0 {
+			if len(shortestPathToFood) == 0 || len(path) < len(shortestPathToFood) {
+				shortestPathToFood = path
+			}
+		}
+	}
+
+	if len(shortestPathToFood) > 0 {
+		nextStep := shortestPathToFood[0]
 		// Verify safety: if we take this step, can we still reach our tail?
 		sim := b.simulateStep(g, nextStep)
 		if sim != nil && (len(b.findPathBFS(sim, sim.Snake[0], tail)) > 0 || len(g.Snake) < 5) {
@@ -80,6 +98,11 @@ func (b *BotSolver) isCellSafe(g *engine.Game, p engine.Point) bool {
 	// Poison hazard check (avoid negative impact food)
 	if g.BonusActive && g.BonusType == engine.ItemPoison && p == g.BonusPoint {
 		return false
+	}
+	for _, item := range g.FoodItems {
+		if item.Type == engine.ItemPoison && item.Point == p {
+			return false
+		}
 	}
 	// Body check (tail is safe because it will vacate on next step)
 	tail := g.Snake[len(g.Snake)-1]

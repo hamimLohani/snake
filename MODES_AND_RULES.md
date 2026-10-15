@@ -142,26 +142,26 @@ $$\text{Effective Speed} = \max\left(40\text{ ms},\, \text{BaseSpeed} - \left\lf
 
 ## 🎁 Power-Ups & Special Items
 
-Snake CLI features a dynamic **concurrent spawning model**:
-1. **Permanent Food (One After Another):** Standard food apples are always present on the board. They never despawn over time and immediately respawn upon being eaten.
-2. **Concurrent Extra Power & Hazards:** Alongside permanent food, bonus power-ups and hazardous items spawn concurrently on the grid (persisting up to 80 ticks on the board if left uneaten).
-3. **One-Third Reduced Durations:** Active durations for positive power-ups are streamlined by one-third for tighter, faster-paced strategic windows.
-4. **Negative Impact Hazard Food (Avoid!):** Poison apples must be actively steered around to avoid steep penalties.
+Snake CLI features a dynamic **concurrent multi-item spawning model**:
+1. **Multiple Simultaneous Foods (One After Another):** Multiple permanent food apples (default 3) coexist on the board at the same time. When any apple is eaten, another immediately respawns so food is always abundant.
+2. **Concurrent Extra Power & Hazards:** Alongside multiple food apples, bonus power-ups and hazardous poison items appear concurrently on the grid (with a 5-second lifespan on the board before rotating if uneaten).
+3. **Calibrated 5-Second Durations:** All active power-up effects, item despawn lifespans, and hazard surges last **5.0 seconds** (e.g. 50 ticks at 100ms BaseTickRate), with an exact live second countdown in the HUD (`Slow-Mo 5.0s`, `⚠️ POISON 5.0s`).
+4. **Negative Impact Hazard Food (Avoid!):** Poison hazard apples (`☠`) are actively rotated onto the board alongside positive power-ups and food apples, requiring players to actively steer around them.
 
 | Item | Glyph | Palette Color | Duration | Gameplay Effect |
 |------|-------|---------------|----------|-----------------|
-| **Permanent Food** | `★` / `🍎` | Red / Neon Green | Permanent | Awards standard points (+10 pts, or +25 pts in Time Attack) and grows snake length by 1. Spawns one after another continuously. |
-| **Slow-Mo** | `⏱` | Cyan (`#00E5FF`) | 40 ticks *(reduced 1/3)* | **Halves engine speed** (doubles tick duration). Awards +20 bonus pts. |
-| **Ghost Mode** | `👻` | Purple (`#D500F9`) | 34 ticks *(reduced 1/3)* | **Phasing ability**: Snake head passes safely through its own body segments without dying. Awards +20 bonus pts. |
-| **3× Multiplier** | `⚡` | Gold (`#FFD600`) | 46 ticks *(reduced 1/3)* | **3× Score Multiplier**: Triples score for all food consumed while active. Awards +30 bonus pts. |
+| **Permanent Food (Multiple)** | `★` / `🍎` | Red / Neon Green | Permanent | Awards standard points (+10 pts, or +25 pts in Time Attack) and grows snake length by 1. Multiple apples are active at once and respawn continuously one after another. |
+| **Slow-Mo** | `⏱` | Cyan (`#00E5FF`) | **5.0 seconds** | **Halves engine speed** (doubles tick duration). Awards +20 bonus pts. |
+| **Ghost Mode** | `👻` | Purple (`#D500F9`) | **5.0 seconds** | **Phasing ability**: Snake head passes safely through its own body segments without dying. Awards +20 bonus pts. |
+| **3× Multiplier** | `⚡` | Gold (`#FFD600`) | **5.0 seconds** | **3× Score Multiplier**: Triples score for all food consumed while active. Awards +30 bonus pts. |
 | **Shrink** | `✂` | Orange (`#FF6D00`) | Instant | **Halves snake body length** (minimum 3 segments). Awards +15 bonus pts. |
-| **Poison (Hazard)** | `☠` / `X` / `!` | Crimson (`#FF0055`) | 25 ticks surge | **HAZARD - MUST AVOID!** Incur **-30 pts penalty** (min 0), **+1 unrewarded length**, and triggers a **Toxic Speed Surge** (35% faster tick rate). |
+| **Poison (Hazard)** | `☠` / `X` / `!` | Crimson (`#FF0055`) | **5.0 seconds** surge | **HAZARD - MUST AVOID!** Incur **-30 pts penalty** (min 0), **+1 unrewarded length**, and triggers a **Toxic Speed Surge** (doubles speed: `TickRate / 2`). |
 
 > [!WARNING]
-> **Avoid the Poison (`☠`)!** Eating a poison apple inflicts an immediate -30 point penalty, grows your body without score reward, and causes an uncontrollable 25-tick speed burst that makes tight cornering extremely dangerous.
+> **Avoid the Poison (`☠`)!** Eating a poison apple inflicts an immediate -30 point penalty, grows your body without score reward, and causes an uncontrollable 5.0-second speed surge that makes tight cornering extremely dangerous.
 
 > [!NOTE]
-> Power-up expiration is tick-based, not clock-based. If the game is paused or you enter the Boss screen, remaining power-up time is preserved.
+> Power-up countdown is measured in real gameplay seconds calibrated to engine tick rates (`TicksForDuration(5 * time.Second)`). If the game is paused or you enter the Boss screen, remaining power-up time is preserved.
 
 ---
 

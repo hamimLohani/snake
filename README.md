@@ -174,15 +174,15 @@ All keys are fully rebindable in `~/.config/snake/config.toml`:
 ---
 
 ## ⚡ Power-Ups & Special Items
-
-Standard permanent food always remains on the grid and respawns one after another continuously. Concurrently alongside food, special extra power-ups and hazardous items appear on the grid:
-
-- ⏱ **Slow-Mo** (Cyan): Halves tick speed for 40 ticks *(reduced by 1/3)*.
-- 👻 **Ghost** (Purple): Enables passing through your own body segments without crashing for 34 ticks *(reduced by 1/3)*.
-- ⚡ **3x Multiplier** (Gold): Triples points earned for 46 ticks *(reduced by 1/3)*.
+ 
+Multiple permanent food apples co-exist on the grid and respawn continuously one after another. Concurrently alongside food, positive power-ups and hazardous poison items appear on the grid (active effects and board lifespans are calibrated to **5.0 seconds**):
+ 
+- ⏱ **Slow-Mo** (Cyan): Halves tick speed for **5.0 seconds**.
+- 👻 **Ghost** (Purple): Enables passing through your own body segments without crashing for **5.0 seconds**.
+- ⚡ **3x Multiplier** (Gold): Triples points earned for **5.0 seconds**.
 - ✂ **Shrink** (Orange): Cuts snake body length in half upon eating.
-- ☠ **Poison (Hazard - Avoid!)** (Crimson): Deducts -30 points, adds +1 unrewarded length, and triggers a frantic **Toxic Speed Surge** (35% faster tick rate) for 25 ticks!
-
+- ☠ **Poison (Hazard - Avoid!)** (Crimson): Deducts -30 points, adds +1 unrewarded length, and triggers an uncontrollable **Toxic Speed Surge** (2x speed) for **5.0 seconds**!
+ 
 For comprehensive details on all items and scoring calculations, read [MODES_AND_RULES.md](file:///Users/Inz_mac/Developer/Shell/Project/snake/MODES_AND_RULES.md).
 
 ---

@@ -32,6 +32,7 @@ type Game struct {
 	BonusType        ItemType
 	BonusActive      bool
 	BonusExpires     uint64
+	FoodItems        []FoodItem
 	Score            int
 	Highscore        int
 	TickCount        uint64
@@ -161,8 +162,20 @@ func (g *Game) Tick() []Event {
 		g.ActivePowerUp = nil
 	}
 
-	// 2b. Check bonus item on board expiration
-	if g.BonusActive && g.TickCount >= g.BonusExpires {
+	// 2b. Check item on-board expiration (5s timer for special items)
+	var remainingItems []FoodItem
+	expiredAny := false
+	for _, item := range g.FoodItems {
+		if item.ExpiresAtTick > 0 && g.TickCount >= item.ExpiresAtTick {
+			expiredAny = true
+		} else {
+			remainingItems = append(remainingItems, item)
+		}
+	}
+	if expiredAny {
+		g.FoodItems = remainingItems
+		g.spawnNeededItems()
+	} else if g.BonusActive && g.TickCount >= g.BonusExpires {
 		g.BonusActive = false
 	}
 
@@ -288,7 +301,22 @@ func (g *Game) Tick() []Event {
 
 	// 8. Did we eat an item?
 	ateItem := false
-	if head == g.Food {
+	eatenIndex := -1
+	var eatenItem FoodItem
+	for i, item := range g.FoodItems {
+		if item.Point == head {
+			eatenIndex = i
+			eatenItem = item
+			break
+		}
+	}
+
+	if eatenIndex >= 0 {
+		ateItem = true
+		g.FoodItems = append(g.FoodItems[:eatenIndex], g.FoodItems[eatenIndex+1:]...)
+		g.applyItemEffect(eatenItem)
+		g.spawnNeededItems()
+	} else if head == g.Food {
 		g.consumeFood()
 		ateItem = true
 	} else if g.BonusActive && head == g.BonusPoint {
@@ -313,118 +341,130 @@ func (g *Game) Tick() []Event {
 	return g.LastEvents
 }
 
-// consumeFood handles points, power-ups, and spawning next food.
-func (g *Game) consumeFood() {
-	item := g.FoodType
-	basePoints := 10
-	if g.Config.Mode == ModeTimeAttack {
-		basePoints = 25
-		g.TimeRemainingSec += 3 // Bonus time on eat
+// TicksForDuration converts real-world duration to engine ticks based on BaseTickRateMs.
+func (g *Game) TicksForDuration(d time.Duration) uint64 {
+	ms := g.Config.BaseTickRateMs
+	if ms <= 0 {
+		ms = 110
+	}
+	ticks := uint64(d.Milliseconds()) / uint64(ms)
+	if ticks < 1 {
+		ticks = 1
+	}
+	return ticks
+}
+
+// TargetFoodCount returns the target count of permanent foods on board (multiple food).
+func (g *Game) TargetFoodCount() int {
+	width := g.Bounds.MaxX - g.Bounds.MinX
+	if width <= 20 {
+		return 2
+	}
+	if width >= 34 {
+		return 4
+	}
+	return 3
+}
+
+// TargetSpecialCount returns target count of special items on board (powerups + poison hazard).
+func (g *Game) TargetSpecialCount() int {
+	return 2
+}
+
+// ItemAt returns the item type and true if an item exists at pt.
+func (g *Game) ItemAt(pt Point) (ItemType, bool) {
+	for _, item := range g.FoodItems {
+		if item.Point == pt {
+			return item.Type, true
+		}
+	}
+	if pt == g.Food {
+		return g.FoodType, true
+	}
+	if g.BonusActive && pt == g.BonusPoint {
+		return g.BonusType, true
+	}
+	return ItemFood, false
+}
+
+// syncFoodFields syncs legacy Food and Bonus fields for backward compatibility.
+func (g *Game) syncFoodFields() {
+	foundFood := false
+	for _, item := range g.FoodItems {
+		if item.Type == ItemFood {
+			g.Food = item.Point
+			g.FoodType = ItemFood
+			foundFood = true
+			break
+		}
+	}
+	if !foundFood && len(g.FoodItems) > 0 {
+		g.Food = g.FoodItems[0].Point
+		g.FoodType = g.FoodItems[0].Type
 	}
 
-	switch item {
+	foundBonus := false
+	for _, item := range g.FoodItems {
+		if item.Type != ItemFood {
+			g.BonusPoint = item.Point
+			g.BonusType = item.Type
+			g.BonusActive = true
+			g.BonusExpires = item.ExpiresAtTick
+			foundBonus = true
+			break
+		}
+	}
+	if !foundBonus {
+		g.BonusActive = false
+	}
+}
+
+// applyItemEffect processes score, growth, and 5-second duration effects.
+func (g *Game) applyItemEffect(item FoodItem) {
+	ticks5s := g.TicksForDuration(5 * time.Second)
+	switch item.Type {
 	case ItemFood:
+		basePoints := 10
+		if g.Config.Mode == ModeTimeAttack {
+			basePoints = 25
+			g.TimeRemainingSec += 3
+		}
 		earned := basePoints * g.ScoreMultiplier
 		g.Score += earned
 		g.GrowthPending += 1
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:     EventEatFood,
-			Position: g.Food,
+			Position: item.Point,
 			Score:    earned,
 			Message:  fmt.Sprintf("+%d pts", earned),
 		})
 	case ItemSlowMo:
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemSlowMo, ExpiresAtTick: g.TickCount + 40}
+		g.ActivePowerUp = &ActivePowerUp{Type: ItemSlowMo, ExpiresAtTick: g.TickCount + ticks5s}
 		g.Score += 20 * g.ScoreMultiplier
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:     EventEatPowerUp,
-			Position: g.Food,
-			Message:  "Slow-Mo Activated! (40 ticks)",
+			Position: item.Point,
+			Score:    20 * g.ScoreMultiplier,
+			Message:  "Slow-Mo Activated! (5s)",
 		})
 	case ItemGhost:
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemGhost, ExpiresAtTick: g.TickCount + 34}
+		g.ActivePowerUp = &ActivePowerUp{Type: ItemGhost, ExpiresAtTick: g.TickCount + ticks5s}
 		g.Score += 20 * g.ScoreMultiplier
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:     EventEatPowerUp,
-			Position: g.Food,
-			Message:  "Ghost Mode Activated! (34 ticks)",
+			Position: item.Point,
+			Score:    20 * g.ScoreMultiplier,
+			Message:  "Ghost Mode Activated! (5s)",
 		})
 	case ItemMultiplier:
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemMultiplier, ExpiresAtTick: g.TickCount + 46}
+		g.ActivePowerUp = &ActivePowerUp{Type: ItemMultiplier, ExpiresAtTick: g.TickCount + ticks5s}
 		g.ScoreMultiplier = 3
 		g.Score += 30
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:     EventEatPowerUp,
-			Position: g.Food,
-			Message:  "3x Multiplier Activated! (46 ticks)",
-		})
-	case ItemShrink:
-		// Shrink cuts snake length in half (minimum 3)
-		if len(g.Snake) > 5 {
-			newLen := len(g.Snake) / 2
-			if newLen < 3 {
-				newLen = 3
-			}
-			g.Snake = g.Snake[:newLen]
-		}
-		g.Score += 15 * g.ScoreMultiplier
-		g.LastEvents = append(g.LastEvents, Event{
-			Type:     EventEatPowerUp,
-			Position: g.Food,
-			Message:  "Snake Shrunk!",
-		})
-	case ItemPoison:
-		penalty := 30
-		g.Score -= penalty
-		if g.Score < 0 {
-			g.Score = 0
-		}
-		g.GrowthPending += 1
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemPoison, ExpiresAtTick: g.TickCount + 25}
-		g.LastEvents = append(g.LastEvents, Event{
-			Type:     EventEatHazard,
-			Position: g.Food,
-			Score:    -penalty,
-			Message:  "⚠️ Poison Ingested! -30 pts & Speed Surge!",
-		})
-	}
-
-	g.spawnFood()
-}
-
-// consumeBonus handles power-ups and negative hazard consumption from bonus items.
-func (g *Game) consumeBonus() {
-	item := g.BonusType
-	g.BonusActive = false
-
-	switch item {
-	case ItemSlowMo:
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemSlowMo, ExpiresAtTick: g.TickCount + 40}
-		g.Score += 20 * g.ScoreMultiplier
-		g.LastEvents = append(g.LastEvents, Event{
-			Type:     EventEatPowerUp,
-			Position: g.BonusPoint,
-			Score:    20 * g.ScoreMultiplier,
-			Message:  "Slow-Mo Activated! (40 ticks)",
-		})
-	case ItemGhost:
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemGhost, ExpiresAtTick: g.TickCount + 34}
-		g.Score += 20 * g.ScoreMultiplier
-		g.LastEvents = append(g.LastEvents, Event{
-			Type:     EventEatPowerUp,
-			Position: g.BonusPoint,
-			Score:    20 * g.ScoreMultiplier,
-			Message:  "Ghost Mode Activated! (34 ticks)",
-		})
-	case ItemMultiplier:
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemMultiplier, ExpiresAtTick: g.TickCount + 46}
-		g.ScoreMultiplier = 3
-		g.Score += 30
-		g.LastEvents = append(g.LastEvents, Event{
-			Type:     EventEatPowerUp,
-			Position: g.BonusPoint,
+			Position: item.Point,
 			Score:    30,
-			Message:  "3x Multiplier Activated! (46 ticks)",
+			Message:  "3x Multiplier Activated! (5s)",
 		})
 	case ItemShrink:
 		if len(g.Snake) > 5 {
@@ -437,7 +477,7 @@ func (g *Game) consumeBonus() {
 		g.Score += 15 * g.ScoreMultiplier
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:     EventEatPowerUp,
-			Position: g.BonusPoint,
+			Position: item.Point,
 			Score:    15 * g.ScoreMultiplier,
 			Message:  "Snake Shrunk!",
 		})
@@ -448,21 +488,91 @@ func (g *Game) consumeBonus() {
 			g.Score = 0
 		}
 		g.GrowthPending += 1
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemPoison, ExpiresAtTick: g.TickCount + 25}
+		g.ActivePowerUp = &ActivePowerUp{Type: ItemPoison, ExpiresAtTick: g.TickCount + ticks5s}
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:     EventEatHazard,
-			Position: g.BonusPoint,
+			Position: item.Point,
 			Score:    -penalty,
-			Message:  "⚠️ Poison Ingested! -30 pts & Speed Surge!",
+			Message:  "⚠️ Poison Ingested! -30 pts & Speed Surge (5s)!",
 		})
 	}
 }
 
-// spawnFood places food on an open cell and spawns a bonus item alongside it.
+// consumeFood handles points, power-ups, and spawning next food (legacy/direct calls).
+func (g *Game) consumeFood() {
+	g.applyItemEffect(FoodItem{Point: g.Food, Type: g.FoodType})
+	g.spawnFood()
+}
+
+// consumeBonus handles bonus items (legacy/direct calls).
+func (g *Game) consumeBonus() {
+	g.BonusActive = false
+	g.applyItemEffect(FoodItem{Point: g.BonusPoint, Type: g.BonusType})
+}
+
+// findOpenCell finds an empty grid coordinate not occupied by snake, obstacles, or food items.
+func (g *Game) findOpenCell() (Point, bool) {
+	totalCells := (g.Bounds.MaxX - g.Bounds.MinX) * (g.Bounds.MaxY - g.Bounds.MinY)
+	occupiedCount := len(g.Snake) + len(g.Obstacles) + len(g.FoodItems) + 2
+	if occupiedCount >= totalCells {
+		return Point{}, false
+	}
+
+	occupied := make(map[Point]bool, occupiedCount)
+	for _, p := range g.Snake {
+		occupied[p] = true
+	}
+	for o := range g.Obstacles {
+		occupied[o] = true
+	}
+	for _, f := range g.FoodItems {
+		occupied[f.Point] = true
+	}
+	occupied[g.Food] = true
+	if g.BonusActive {
+		occupied[g.BonusPoint] = true
+	}
+
+	width := g.Bounds.MaxX - g.Bounds.MinX
+	height := g.Bounds.MaxY - g.Bounds.MinY
+
+	for attempts := 0; attempts < 500; attempts++ {
+		cand := Point{
+			X: g.Bounds.MinX + g.RNG.IntN(width),
+			Y: g.Bounds.MinY + g.RNG.IntN(height),
+		}
+		if !occupied[cand] {
+			return cand, true
+		}
+	}
+
+	// Fallback scan
+	for y := g.Bounds.MinY; y < g.Bounds.MaxY; y++ {
+		for x := g.Bounds.MinX; x < g.Bounds.MaxX; x++ {
+			p := Point{X: x, Y: y}
+			if !occupied[p] {
+				return p, true
+			}
+		}
+	}
+
+	return Point{}, false
+}
+
+// spawnFood places food on open cells and ensures required food/special count.
 func (g *Game) spawnFood() {
+	g.spawnNeededItems()
+}
+
+// spawnBonusItem spawns an extra bonus item alongside permanent food.
+func (g *Game) spawnBonusItem() {
+	g.spawnNeededItems()
+}
+
+// spawnNeededItems maintains multiple permanent foods and special items (with poison hazard).
+func (g *Game) spawnNeededItems() {
 	totalCells := (g.Bounds.MaxX - g.Bounds.MinX) * (g.Bounds.MaxY - g.Bounds.MinY)
 	if len(g.Snake)+len(g.Obstacles) >= totalCells {
-		// Perfect win condition (board completely filled)
 		g.GameOver = true
 		g.GameOverReason = "Victory! Board fully cleared!"
 		g.LastEvents = append(g.LastEvents, Event{
@@ -473,124 +583,70 @@ func (g *Game) spawnFood() {
 		return
 	}
 
-	// Fast rejection sampling for food coordinates
-	occupied := make(map[Point]bool, len(g.Snake)+len(g.Obstacles))
-	for _, p := range g.Snake {
-		occupied[p] = true
-	}
-	for o := range g.Obstacles {
-		occupied[o] = true
-	}
+	targetFood := g.TargetFoodCount()
+	targetSpecial := g.TargetSpecialCount()
 
-	width := g.Bounds.MaxX - g.Bounds.MinX
-	height := g.Bounds.MaxY - g.Bounds.MinY
-
-	for attempts := 0; attempts < 1000; attempts++ {
-		cand := Point{
-			X: g.Bounds.MinX + g.RNG.IntN(width),
-			Y: g.Bounds.MinY + g.RNG.IntN(height),
-		}
-		if !occupied[cand] {
-			g.Food = cand
-			g.FoodType = ItemFood
-			if !g.BonusActive {
-				g.spawnBonusItem()
-			}
-			return
-		}
-	}
-
-	// Fallback scan if grid is nearly full
-	for y := g.Bounds.MinY; y < g.Bounds.MaxY; y++ {
-		for x := g.Bounds.MinX; x < g.Bounds.MaxX; x++ {
-			p := Point{X: x, Y: y}
-			if !occupied[p] {
-				g.Food = p
-				g.FoodType = ItemFood
-				if !g.BonusActive {
-					g.spawnBonusItem()
-				}
-				return
+	currentFood := 0
+	currentSpecial := 0
+	hasPoison := false
+	for _, item := range g.FoodItems {
+		if item.Type == ItemFood {
+			currentFood++
+		} else {
+			currentSpecial++
+			if item.Type == ItemPoison {
+				hasPoison = true
 			}
 		}
 	}
-}
 
-// spawnBonusItem places an extra power-up or hazard item alongside permanent food.
-func (g *Game) spawnBonusItem() {
-	totalCells := (g.Bounds.MaxX - g.Bounds.MinX) * (g.Bounds.MaxY - g.Bounds.MinY)
-	occupiedCount := len(g.Snake) + len(g.Obstacles) + 1
-	if occupiedCount >= totalCells {
-		return
-	}
-
-	occupied := make(map[Point]bool, occupiedCount)
-	for _, p := range g.Snake {
-		occupied[p] = true
-	}
-	for o := range g.Obstacles {
-		occupied[o] = true
-	}
-	occupied[g.Food] = true
-
-	width := g.Bounds.MaxX - g.Bounds.MinX
-	height := g.Bounds.MaxY - g.Bounds.MinY
-
-	var target Point
-	found := false
-	for attempts := 0; attempts < 500; attempts++ {
-		cand := Point{
-			X: g.Bounds.MinX + g.RNG.IntN(width),
-			Y: g.Bounds.MinY + g.RNG.IntN(height),
-		}
-		if !occupied[cand] {
-			target = cand
-			found = true
+	// 1. Replenish permanent foods (multiple on board simultaneously)
+	for currentFood < targetFood {
+		pt, ok := g.findOpenCell()
+		if !ok {
 			break
 		}
+		g.FoodItems = append(g.FoodItems, FoodItem{
+			Point: pt,
+			Type:  ItemFood,
+		})
+		currentFood++
 	}
 
-	if !found {
-		for y := g.Bounds.MinY; y < g.Bounds.MaxY; y++ {
-			for x := g.Bounds.MinX; x < g.Bounds.MaxX; x++ {
-				p := Point{X: x, Y: y}
-				if !occupied[p] {
-					target = p
-					found = true
-					break
-				}
-			}
-			if found {
-				break
+	// 2. Replenish special items (guarantee 1 poison hazard food + 1 powerup, each for 5s)
+	ticks5s := g.TicksForDuration(5 * time.Second)
+	for currentSpecial < targetSpecial {
+		pt, ok := g.findOpenCell()
+		if !ok {
+			break
+		}
+
+		var itemType ItemType
+		if !hasPoison && g.Config.Mode != ModeZen {
+			itemType = ItemPoison
+			hasPoison = true
+		} else {
+			roll := g.RNG.Float64()
+			if roll < 0.25 {
+				itemType = ItemSlowMo
+			} else if roll < 0.50 {
+				itemType = ItemGhost
+			} else if roll < 0.75 {
+				itemType = ItemMultiplier
+			} else {
+				itemType = ItemShrink
 			}
 		}
+
+		g.FoodItems = append(g.FoodItems, FoodItem{
+			Point:         pt,
+			Type:          itemType,
+			ExpiresAtTick: g.TickCount + ticks5s, // 5 seconds on board
+		})
+		currentSpecial++
 	}
 
-	if !found {
-		return
-	}
-
-	g.BonusPoint = target
-	g.BonusActive = true
-	g.BonusExpires = g.TickCount + 80 // Lifespan of 80 ticks on board
-
-	// Roll for bonus type: 70% positive power-up, 30% negative hazard
-	roll := g.RNG.Float64()
-	if roll < 0.18 {
-		g.BonusType = ItemSlowMo
-	} else if roll < 0.36 {
-		g.BonusType = ItemGhost
-	} else if roll < 0.54 {
-		g.BonusType = ItemMultiplier
-	} else if roll < 0.70 {
-		g.BonusType = ItemShrink
-	} else {
-		g.BonusType = ItemPoison
-	}
-
-	if g.Config.Mode == ModeZen && g.BonusType == ItemPoison {
-		g.BonusType = ItemSlowMo
-	}
+	g.syncFoodFields()
 }
 
 // TickDuration calculates the current tick interval in milliseconds.

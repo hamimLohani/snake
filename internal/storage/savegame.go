@@ -18,8 +18,9 @@ type SaveState struct {
 	BonusPoint       engine.Point     `json:"bonus_point,omitempty"`
 	BonusType        engine.ItemType  `json:"bonus_type,omitempty"`
 	BonusActive      bool             `json:"bonus_active,omitempty"`
-	BonusExpires     uint64           `json:"bonus_expires,omitempty"`
-	Score            int              `json:"score"`
+	BonusExpires     uint64            `json:"bonus_expires,omitempty"`
+	FoodItems        []engine.FoodItem `json:"food_items,omitempty"`
+	Score            int               `json:"score"`
 	TickCount        uint64           `json:"tick_count"`
 	GrowthPending    int              `json:"growth_pending"`
 	Bounds           engine.Bounds    `json:"bounds"`
@@ -57,6 +58,7 @@ func SaveActiveGame(g *engine.Game) error {
 		BonusType:        g.BonusType,
 		BonusActive:      g.BonusActive,
 		BonusExpires:     g.BonusExpires,
+		FoodItems:        g.FoodItems,
 		Score:            g.Score,
 		TickCount:        g.TickCount,
 		GrowthPending:    g.GrowthPending,
@@ -110,6 +112,9 @@ func LoadSavedGame() (*engine.Game, error) {
 	g.BonusType = state.BonusType
 	g.BonusActive = state.BonusActive
 	g.BonusExpires = state.BonusExpires
+	if len(state.FoodItems) > 0 {
+		g.FoodItems = state.FoodItems
+	}
 	g.Score = state.Score
 	g.TickCount = state.TickCount
 	g.GrowthPending = state.GrowthPending

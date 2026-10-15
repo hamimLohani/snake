@@ -170,6 +170,9 @@ func TestGhostPowerUp(t *testing.T) {
 	cfg.Seed = 500
 
 	game := New(cfg)
+	game.FoodItems = nil
+	game.Food = Point{X: 0, Y: 0}
+	game.BonusActive = false
 	game.ActivePowerUp = &ActivePowerUp{
 		Type:          ItemGhost,
 		ExpiresAtTick: 100,
@@ -184,7 +187,7 @@ func TestGhostPowerUp(t *testing.T) {
 	game.Tick()
 
 	if game.GameOver {
-		t.Errorf("Ghost power-up should allow passing through own body without death")
+		t.Errorf("Ghost power-up should allow passing through own body without death: %s", game.GameOverReason)
 	}
 }
 
@@ -305,14 +308,17 @@ func TestBonusItemCoexistenceAndExpiration(t *testing.T) {
 	}
 }
 
-func TestBonusDurationReducedOneThird(t *testing.T) {
+func TestBonusDurationFiveSeconds(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Width = 20
 	cfg.Height = 20
 	cfg.Seed = 2222
+	cfg.BaseTickRateMs = 100
+	ticks5s := uint64(50) // 5000ms / 100ms = 50 ticks
 
-	// 1. SlowMo: 40 ticks
+	// 1. SlowMo: 5 seconds
 	g1 := New(cfg)
+	g1.FoodItems = nil
 	head := g1.Snake[0]
 	g1.BonusPoint = Point{X: head.X + 1, Y: head.Y}
 	g1.BonusType = ItemSlowMo
@@ -322,12 +328,13 @@ func TestBonusDurationReducedOneThird(t *testing.T) {
 	if g1.ActivePowerUp == nil || g1.ActivePowerUp.Type != ItemSlowMo {
 		t.Fatalf("Expected ActivePowerUp SlowMo")
 	}
-	if g1.ActivePowerUp.ExpiresAtTick != g1.TickCount+40 {
-		t.Errorf("Expected SlowMo duration to be 40 ticks (reduced by 1/3), got %d ticks", g1.ActivePowerUp.ExpiresAtTick-g1.TickCount)
+	if g1.ActivePowerUp.ExpiresAtTick != g1.TickCount+ticks5s {
+		t.Errorf("Expected SlowMo duration to be 5s (%d ticks), got %d ticks", ticks5s, g1.ActivePowerUp.ExpiresAtTick-g1.TickCount)
 	}
 
-	// 2. Ghost: 34 ticks
+	// 2. Ghost: 5 seconds
 	g2 := New(cfg)
+	g2.FoodItems = nil
 	head2 := g2.Snake[0]
 	g2.BonusPoint = Point{X: head2.X + 1, Y: head2.Y}
 	g2.BonusType = ItemGhost
@@ -337,12 +344,13 @@ func TestBonusDurationReducedOneThird(t *testing.T) {
 	if g2.ActivePowerUp == nil || g2.ActivePowerUp.Type != ItemGhost {
 		t.Fatalf("Expected ActivePowerUp Ghost")
 	}
-	if g2.ActivePowerUp.ExpiresAtTick != g2.TickCount+34 {
-		t.Errorf("Expected Ghost duration to be 34 ticks (reduced by 1/3), got %d ticks", g2.ActivePowerUp.ExpiresAtTick-g2.TickCount)
+	if g2.ActivePowerUp.ExpiresAtTick != g2.TickCount+ticks5s {
+		t.Errorf("Expected Ghost duration to be 5s (%d ticks), got %d ticks", ticks5s, g2.ActivePowerUp.ExpiresAtTick-g2.TickCount)
 	}
 
-	// 3. Multiplier: 46 ticks
+	// 3. Multiplier: 5 seconds
 	g3 := New(cfg)
+	g3.FoodItems = nil
 	head3 := g3.Snake[0]
 	g3.BonusPoint = Point{X: head3.X + 1, Y: head3.Y}
 	g3.BonusType = ItemMultiplier
@@ -352,8 +360,8 @@ func TestBonusDurationReducedOneThird(t *testing.T) {
 	if g3.ActivePowerUp == nil || g3.ActivePowerUp.Type != ItemMultiplier {
 		t.Fatalf("Expected ActivePowerUp Multiplier")
 	}
-	if g3.ActivePowerUp.ExpiresAtTick != g3.TickCount+46 {
-		t.Errorf("Expected Multiplier duration to be 46 ticks (reduced by 1/3), got %d ticks", g3.ActivePowerUp.ExpiresAtTick-g3.TickCount)
+	if g3.ActivePowerUp.ExpiresAtTick != g3.TickCount+ticks5s {
+		t.Errorf("Expected Multiplier duration to be 5s (%d ticks), got %d ticks", ticks5s, g3.ActivePowerUp.ExpiresAtTick-g3.TickCount)
 	}
 }
 
@@ -363,8 +371,10 @@ func TestNegativeImpactPoisonFood(t *testing.T) {
 	cfg.Height = 20
 	cfg.Seed = 3333
 	cfg.BaseTickRateMs = 100
+	ticks5s := uint64(50)
 
 	game := New(cfg)
+	game.FoodItems = nil
 	game.Food = Point{X: 0, Y: 0}
 	game.Score = 50
 
@@ -387,12 +397,12 @@ func TestNegativeImpactPoisonFood(t *testing.T) {
 		t.Errorf("Expected snake body to grow as penalty, expected len %d, got %d", initialLen+1, len(game.Snake))
 	}
 
-	// 3. Active powerup is poison for 25 ticks
+	// 3. Active powerup is poison for 5s (50 ticks at 100ms)
 	if game.ActivePowerUp == nil || game.ActivePowerUp.Type != ItemPoison {
 		t.Fatalf("Expected ActivePowerUp ItemPoison")
 	}
-	if game.ActivePowerUp.ExpiresAtTick != 1+25 { // Ingested on tick 1
-		t.Errorf("Expected poison duration of 25 ticks, got %d", game.ActivePowerUp.ExpiresAtTick-1)
+	if game.ActivePowerUp.ExpiresAtTick != 1+ticks5s { // Ingested on tick 1
+		t.Errorf("Expected poison duration of 5s (%d ticks), got %d", ticks5s, game.ActivePowerUp.ExpiresAtTick-1)
 	}
 
 	// 4. TickDuration produces a speed surge (faster tick rate)
@@ -422,6 +432,65 @@ func TestNegativeImpactPoisonFood(t *testing.T) {
 	game.Tick()
 	if game.Score < 0 {
 		t.Errorf("Score should not drop below 0 on poison, got %d", game.Score)
+	}
+}
+
+func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Width = 24
+	cfg.Height = 20
+	cfg.Seed = 4444
+
+	game := New(cfg)
+
+	// Board should contain multiple food apples (TargetFoodCount is 3)
+	foodCount := 0
+	hasPoison := false
+	hasPowerUp := false
+	for _, item := range game.FoodItems {
+		switch item.Type {
+		case ItemFood:
+			foodCount++
+		case ItemPoison:
+			hasPoison = true
+		default:
+			hasPowerUp = true
+		}
+	}
+
+	if foodCount < 2 {
+		t.Errorf("Expected at least 2 simultaneous permanent foods on board, got %d", foodCount)
+	}
+	if !hasPoison {
+		t.Errorf("Expected negative poison hazard food to be present on board")
+	}
+	if !hasPowerUp {
+		t.Errorf("Expected a bonus power-up to be present on board")
+	}
+
+	// Eating one food apple immediately replenishes another ("permanent will come one after another")
+	var targetFood Point
+	for _, item := range game.FoodItems {
+		if item.Type == ItemFood {
+			targetFood = item.Point
+			break
+		}
+	}
+
+	// Move snake directly onto targetFood
+	game.Snake = []Point{{X: targetFood.X - 1, Y: targetFood.Y}}
+	game.Direction = DirRight
+	game.Tick()
+
+	newFoodCount := 0
+	for _, item := range game.FoodItems {
+		if item.Type == ItemFood {
+			newFoodCount++
+		}
+	}
+
+	if newFoodCount < 2 {
+		t.Errorf("Expected permanent food to immediately replenish, got %d", newFoodCount)
 	}
 }
 
