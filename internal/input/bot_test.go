@@ -115,3 +115,31 @@ func TestReplayDeterminism(t *testing.T) {
 		t.Fatalf("Replay determinism mismatch on food position: %+v vs %+v", game1.Food, game2.Food)
 	}
 }
+
+func TestBotAvoidsPoisonHazard(t *testing.T) {
+	cfg := engine.DefaultConfig()
+	cfg.Width = 10
+	cfg.Height = 10
+	cfg.Seed = 5555
+
+	game := engine.New(cfg)
+	solver := NewBotSolver()
+
+	// Snake head at (5, 5), body at (4, 5), (3, 5), moving Right
+	head := game.Snake[0]
+	// Place poison directly in front of head at (6, 5)
+	game.BonusPoint = engine.Point{X: head.X + 1, Y: head.Y}
+	game.BonusType = engine.ItemPoison
+	game.BonusActive = true
+
+	// Place safe food above at (5, 4)
+	game.Food = engine.Point{X: head.X, Y: head.Y - 1}
+
+	nextMove := solver.NextMove(game)
+	if nextMove == engine.DirRight {
+		t.Errorf("Bot should NOT move Right into poison hazard at (6, 5)")
+	}
+	if nextMove != engine.DirUp {
+		t.Logf("Bot navigated safely with move: %v", nextMove)
+	}
+}

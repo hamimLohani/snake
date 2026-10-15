@@ -77,6 +77,10 @@ func (b *BotSolver) isCellSafe(g *engine.Game, p engine.Point) bool {
 	if g.Obstacles[p] {
 		return false
 	}
+	// Poison hazard check (avoid negative impact food)
+	if g.BonusActive && g.BonusType == engine.ItemPoison && p == g.BonusPoint {
+		return false
+	}
 	// Body check (tail is safe because it will vacate on next step)
 	tail := g.Snake[len(g.Snake)-1]
 	for i := 0; i < len(g.Snake)-1; i++ {

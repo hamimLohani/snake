@@ -3,6 +3,7 @@ package engine
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestSnakeMovement(t *testing.T) {
@@ -272,6 +273,155 @@ func TestPowerUpEffects(t *testing.T) {
 
 	if len(game2.Snake) >= origLen {
 		t.Errorf("Expected snake length to shrink, was %d, now %d", origLen, len(game2.Snake))
+	}
+}
+
+func TestBonusItemCoexistenceAndExpiration(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Width = 20
+	cfg.Height = 20
+	cfg.Seed = 1111
+
+	game := New(cfg)
+
+	// Food and Bonus should both be active and at different locations
+	if game.FoodType != ItemFood {
+		t.Errorf("Permanent food should be of type ItemFood, got %v", game.FoodType)
+	}
+	if !game.BonusActive {
+		t.Errorf("Bonus item should be active alongside food at start")
+	}
+	if game.Food == game.BonusPoint {
+		t.Errorf("Food and Bonus item must not occupy the same cell")
+	}
+
+	// Advance ticks beyond BonusExpires to test board despawn
+	game.BonusExpires = game.TickCount + 5
+	for i := 0; i < 5; i++ {
+		game.Tick()
+	}
+	if game.BonusActive {
+		t.Errorf("Bonus item should have despawned after expiration ticks")
+	}
+}
+
+func TestBonusDurationReducedOneThird(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Width = 20
+	cfg.Height = 20
+	cfg.Seed = 2222
+
+	// 1. SlowMo: 40 ticks
+	g1 := New(cfg)
+	head := g1.Snake[0]
+	g1.BonusPoint = Point{X: head.X + 1, Y: head.Y}
+	g1.BonusType = ItemSlowMo
+	g1.BonusActive = true
+	g1.Tick()
+
+	if g1.ActivePowerUp == nil || g1.ActivePowerUp.Type != ItemSlowMo {
+		t.Fatalf("Expected ActivePowerUp SlowMo")
+	}
+	if g1.ActivePowerUp.ExpiresAtTick != g1.TickCount+40 {
+		t.Errorf("Expected SlowMo duration to be 40 ticks (reduced by 1/3), got %d ticks", g1.ActivePowerUp.ExpiresAtTick-g1.TickCount)
+	}
+
+	// 2. Ghost: 34 ticks
+	g2 := New(cfg)
+	head2 := g2.Snake[0]
+	g2.BonusPoint = Point{X: head2.X + 1, Y: head2.Y}
+	g2.BonusType = ItemGhost
+	g2.BonusActive = true
+	g2.Tick()
+
+	if g2.ActivePowerUp == nil || g2.ActivePowerUp.Type != ItemGhost {
+		t.Fatalf("Expected ActivePowerUp Ghost")
+	}
+	if g2.ActivePowerUp.ExpiresAtTick != g2.TickCount+34 {
+		t.Errorf("Expected Ghost duration to be 34 ticks (reduced by 1/3), got %d ticks", g2.ActivePowerUp.ExpiresAtTick-g2.TickCount)
+	}
+
+	// 3. Multiplier: 46 ticks
+	g3 := New(cfg)
+	head3 := g3.Snake[0]
+	g3.BonusPoint = Point{X: head3.X + 1, Y: head3.Y}
+	g3.BonusType = ItemMultiplier
+	g3.BonusActive = true
+	g3.Tick()
+
+	if g3.ActivePowerUp == nil || g3.ActivePowerUp.Type != ItemMultiplier {
+		t.Fatalf("Expected ActivePowerUp Multiplier")
+	}
+	if g3.ActivePowerUp.ExpiresAtTick != g3.TickCount+46 {
+		t.Errorf("Expected Multiplier duration to be 46 ticks (reduced by 1/3), got %d ticks", g3.ActivePowerUp.ExpiresAtTick-g3.TickCount)
+	}
+}
+
+func TestNegativeImpactPoisonFood(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Width = 20
+	cfg.Height = 20
+	cfg.Seed = 3333
+	cfg.BaseTickRateMs = 100
+
+	game := New(cfg)
+	game.Food = Point{X: 0, Y: 0}
+	game.Score = 50
+
+	head := game.Snake[0]
+	game.BonusPoint = Point{X: head.X + 1, Y: head.Y}
+	game.BonusType = ItemPoison
+	game.BonusActive = true
+
+	initialLen := len(game.Snake)
+	events := append([]Event(nil), game.Tick()...)
+
+	// 1. Score reduced by 30 points
+	if game.Score != 20 {
+		t.Errorf("Expected score reduced to 20 from 50 (-30 pts), got %d", game.Score)
+	}
+
+	// 2. Body grows by 1
+	game.Tick() // Complete growth
+	if len(game.Snake) != initialLen+1 {
+		t.Errorf("Expected snake body to grow as penalty, expected len %d, got %d", initialLen+1, len(game.Snake))
+	}
+
+	// 3. Active powerup is poison for 25 ticks
+	if game.ActivePowerUp == nil || game.ActivePowerUp.Type != ItemPoison {
+		t.Fatalf("Expected ActivePowerUp ItemPoison")
+	}
+	if game.ActivePowerUp.ExpiresAtTick != 1+25 { // Ingested on tick 1
+		t.Errorf("Expected poison duration of 25 ticks, got %d", game.ActivePowerUp.ExpiresAtTick-1)
+	}
+
+	// 4. TickDuration produces a speed surge (faster tick rate)
+	dur := game.TickDuration()
+	if dur >= 100*time.Millisecond {
+		t.Errorf("Expected speed surge faster than base 100ms, got %v", dur)
+	}
+
+	// 5. Event emitted was EventEatHazard
+	foundHazardEvent := false
+	for _, ev := range events {
+		if ev.Type == EventEatHazard {
+			foundHazardEvent = true
+			break
+		}
+	}
+	if !foundHazardEvent {
+		t.Errorf("Expected EventEatHazard in events, got: %v", events)
+	}
+
+	// Test score floor at 0 when points < 30
+	game.Score = 15
+	head = game.Snake[0]
+	game.BonusPoint = Point{X: head.X + 1, Y: head.Y}
+	game.BonusType = ItemPoison
+	game.BonusActive = true
+	game.Tick()
+	if game.Score < 0 {
+		t.Errorf("Score should not drop below 0 on poison, got %d", game.Score)
 	}
 }
 

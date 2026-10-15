@@ -599,6 +599,8 @@ func (m UIModel) renderSampleBoard() string {
 	foodY := 1
 	powerX := 1
 	powerY := miniH - 2
+	hazardX := 1
+	hazardY := 1
 
 	emptyDot := lipgloss.NewStyle().Foreground(lipgloss.Color("#2a2a2a")).Render("· ")
 	if m.Theme.Name == "light" {
@@ -621,6 +623,8 @@ func (m UIModel) renderSampleBoard() string {
 				gridBuilder.WriteString(m.Theme.FoodStyle.Render(m.Theme.FoodGlyph))
 			case x == powerX && y == powerY:
 				gridBuilder.WriteString(m.Theme.SlowMoStyle.Render(m.Theme.SlowMoGlyph))
+			case x == hazardX && y == hazardY:
+				gridBuilder.WriteString(m.Theme.PoisonStyle.Render(m.Theme.PoisonGlyph))
 			case m.SelectedObstacles && ((x == miniW/2-2 && y == miniH/2-2) || (x == miniW/2+2 && y == miniH/2+1)):
 				gridBuilder.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render("██"))
 			default:
@@ -648,10 +652,11 @@ func (m UIModel) renderSampleBoard() string {
 		m.Theme.TitleStyle.Render("[ "+strings.ToUpper(m.Theme.Name)+" ]"),
 	)
 
-	legend := fmt.Sprintf("Head:%s Body:%s Food:%s",
+	legend := fmt.Sprintf("Head:%s Body:%s Food:%s Hazard:%s",
 		m.Theme.HeadStyle.Render(m.Theme.HeadGlyph("UP")),
 		m.Theme.BodyStyle.Render(m.Theme.BodyGlyph),
 		m.Theme.FoodStyle.Render(m.Theme.FoodGlyph),
+		m.Theme.PoisonStyle.Render(m.Theme.PoisonGlyph),
 	)
 	if m.SelectedObstacles {
 		legend += " " + lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render("Obs:██")
@@ -879,12 +884,18 @@ func (m UIModel) renderRichGame() string {
 	}
 
 	if m.Game.ActivePowerUp != nil {
+		badgeBg := lipgloss.Color("#FF0055")
+		badgeText := fmt.Sprintf("%s %dt", m.Game.ActivePowerUp.Type.String(), m.Game.ActivePowerUp.ExpiresAtTick-m.Game.TickCount)
+		if m.Game.ActivePowerUp.Type == engine.ItemPoison {
+			badgeBg = lipgloss.Color("#D50000")
+			badgeText = fmt.Sprintf("⚠️ POISON %dt", m.Game.ActivePowerUp.ExpiresAtTick-m.Game.TickCount)
+		}
 		pBadge := lipgloss.NewStyle().
-			Background(lipgloss.Color("#FF0055")).
+			Background(badgeBg).
 			Foreground(lipgloss.Color("#FFFFFF")).
 			Bold(true).
 			Padding(0, 1).
-			Render(fmt.Sprintf("%s %dt", m.Game.ActivePowerUp.Type.String(), m.Game.ActivePowerUp.ExpiresAtTick-m.Game.TickCount))
+			Render(badgeText)
 		hudLeft += "  " + pBadge
 	}
 
@@ -910,6 +921,23 @@ func (m UIModel) renderRichGame() string {
 					board.WriteString(m.Theme.MultiplierStyle.Render(m.Theme.MultiplierGlyph))
 				case engine.ItemShrink:
 					board.WriteString(m.Theme.ShrinkStyle.Render(m.Theme.ShrinkGlyph))
+				case engine.ItemPoison:
+					board.WriteString(m.Theme.PoisonStyle.Render(m.Theme.PoisonGlyph))
+				default:
+					board.WriteString(m.Theme.FoodStyle.Render(m.Theme.FoodGlyph))
+				}
+			case m.Game.BonusActive && pt == m.Game.BonusPoint:
+				switch m.Game.BonusType {
+				case engine.ItemSlowMo:
+					board.WriteString(m.Theme.SlowMoStyle.Render(m.Theme.SlowMoGlyph))
+				case engine.ItemGhost:
+					board.WriteString(m.Theme.GhostStyle.Render(m.Theme.GhostGlyph))
+				case engine.ItemMultiplier:
+					board.WriteString(m.Theme.MultiplierStyle.Render(m.Theme.MultiplierGlyph))
+				case engine.ItemShrink:
+					board.WriteString(m.Theme.ShrinkStyle.Render(m.Theme.ShrinkGlyph))
+				case engine.ItemPoison:
+					board.WriteString(m.Theme.PoisonStyle.Render(m.Theme.PoisonGlyph))
 				default:
 					board.WriteString(m.Theme.FoodStyle.Render(m.Theme.FoodGlyph))
 				}

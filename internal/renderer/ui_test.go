@@ -340,3 +340,36 @@ func TestUIModel_SampleBoardPreview_ObstaclesToggle(t *testing.T) {
 		t.Errorf("Expected preview to contain 'Obs:██' when obstacles are ON")
 	}
 }
+
+func TestUIModel_SampleBoardPreview_HazardLegend(t *testing.T) {
+	game := newTestGame()
+	cfg := storage.DefaultConfig()
+	stats := storage.NewStats()
+
+	model := NewUIModel(game, cfg, stats, "dark", true)
+	view := model.View()
+
+	if !strings.Contains(view, "Hazard:") {
+		t.Errorf("Expected preview legend to contain 'Hazard:', got:\n%s", view)
+	}
+	if !strings.Contains(view, "Food:") {
+		t.Errorf("Expected preview legend to contain 'Food:'")
+	}
+}
+
+func TestUIModel_ActivePoisonBadge(t *testing.T) {
+	game := newTestGame()
+	game.ActivePowerUp = &engine.ActivePowerUp{
+		Type:          engine.ItemPoison,
+		ExpiresAtTick: 25,
+	}
+	cfg := storage.DefaultConfig()
+	stats := storage.NewStats()
+
+	model := NewUIModel(game, cfg, stats, "dark", false)
+	view := model.View()
+
+	if !strings.Contains(view, "POISON") {
+		t.Errorf("Expected HUD to show POISON badge, got:\n%s", view)
+	}
+}

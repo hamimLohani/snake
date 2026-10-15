@@ -30,7 +30,7 @@
 - **Strictly Deterministic Engine**: Pure state machine with seeded PRNG; enables 100% reproducible replays, headless simulation, and automated verification.
 - **Interactive Main Menu & Live Sample Board**: Sleek two-column launch screen with dynamic live board preview for board sizes (Small, Medium, Classic, Large), visual themes, obstacles, and difficulty.
 - **4 Distinct Game Modes**: Classic, Time Attack, Survival (shrinking borders), and Zen (infinite wrap-around).
-- **Dynamic Power-Ups**: Slow-Mo, Ghost (pass through own body), 3x Score Multiplier, and Shrink.
+- **Dynamic Power-Ups & Avoidable Hazards**: Permanent food with concurrent bonus items: Slow-Mo, Ghost, 3x Multiplier, Shrink, and avoidable Poison hazard apples.
 - **Discreet Boss Key**: Press `b` or `esc` to instantly swap the screen to a convincing fake `htop`, compiler build log, or `git log`.
 - **Procedural Obstacles**: Deterministic obstacle mazes generated from any shareable `--seed`.
 - **Local Persistence**: Leaderboards, high scores, play time, achievements (`~/.config/snake/stats.json`), and rebindable TOML config (`~/.config/snake/config.toml`).
@@ -71,7 +71,7 @@ sudo mv snake /usr/local/bin/
 
 #### Linux Tarball Archive (.tar.gz):
 ```bash
-curl -sL https://github.com/hamimLohani/snake/releases/latest/download/snake-v1.0.4-linux-amd64.tar.gz | tar -xz
+curl -sL https://github.com/hamimLohani/snake/releases/latest/download/snake-v1.0.5-linux-amd64.tar.gz | tar -xz
 sudo mv snake-linux-amd64 /usr/local/bin/snake
 ```
 
@@ -173,14 +173,17 @@ All keys are fully rebindable in `~/.config/snake/config.toml`:
 
 ---
 
-## ⚡ Power-Ups
+## ⚡ Power-Ups & Special Items
 
-During gameplay, special items appear on the grid:
+Standard permanent food always remains on the grid and respawns one after another continuously. Concurrently alongside food, special extra power-ups and hazardous items appear on the grid:
 
-- ⏱ **Slow-Mo** (Cyan): Halves the snake's tick speed for 60 ticks.
-- 👻 **Ghost** (Purple): Enables passing through your own body segments without crashing for 50 ticks.
-- ⚡ **3x Multiplier** (Gold): Triples points earned for 70 ticks.
+- ⏱ **Slow-Mo** (Cyan): Halves tick speed for 40 ticks *(reduced by 1/3)*.
+- 👻 **Ghost** (Purple): Enables passing through your own body segments without crashing for 34 ticks *(reduced by 1/3)*.
+- ⚡ **3x Multiplier** (Gold): Triples points earned for 46 ticks *(reduced by 1/3)*.
 - ✂ **Shrink** (Orange): Cuts snake body length in half upon eating.
+- ☠ **Poison (Hazard - Avoid!)** (Crimson): Deducts -30 points, adds +1 unrewarded length, and triggers a frantic **Toxic Speed Surge** (35% faster tick rate) for 25 ticks!
+
+For comprehensive details on all items and scoring calculations, read [MODES_AND_RULES.md](file:///Users/Inz_mac/Developer/Shell/Project/snake/MODES_AND_RULES.md).
 
 ---
 

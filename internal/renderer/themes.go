@@ -14,6 +14,7 @@ type Theme struct {
 	GhostGlyph      string
 	MultiplierGlyph string
 	ShrinkGlyph     string
+	PoisonGlyph     string
 	HeadStyle       lipgloss.Style
 	BodyStyle       lipgloss.Style
 	FoodStyle       lipgloss.Style
@@ -21,6 +22,7 @@ type Theme struct {
 	GhostStyle      lipgloss.Style
 	MultiplierStyle lipgloss.Style
 	ShrinkStyle     lipgloss.Style
+	PoisonStyle     lipgloss.Style
 	BorderStyle     lipgloss.Style
 	TitleStyle      lipgloss.Style
 	ScoreStyle      lipgloss.Style
@@ -71,6 +73,7 @@ func DarkTheme() Theme {
 		GhostGlyph:      "👻",
 		MultiplierGlyph: "⚡",
 		ShrinkGlyph:     "✂ ",
+		PoisonGlyph:     "☠ ",
 		HeadStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF87")).Bold(true),
 		BodyStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#00DF89")),
 		FoodStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0055")).Bold(true),
@@ -78,6 +81,7 @@ func DarkTheme() Theme {
 		GhostStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#D500F9")).Bold(true),
 		MultiplierStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD600")).Bold(true),
 		ShrinkStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6D00")).Bold(true),
+		PoisonStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0055")).Bold(true),
 		BorderStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#7928CA")).Border(lipgloss.RoundedBorder()).Padding(0, 0),
 		TitleStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF87")).Bold(true),
 		ScoreStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#00E5FF")).Bold(true),
@@ -104,6 +108,7 @@ func LightTheme() Theme {
 		GhostGlyph:      "G ",
 		MultiplierGlyph: "M ",
 		ShrinkGlyph:     "K ",
+		PoisonGlyph:     "X ",
 		HeadStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#005F73")).Bold(true),
 		BodyStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#0A9396")),
 		FoodStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#AE2012")).Bold(true),
@@ -111,6 +116,7 @@ func LightTheme() Theme {
 		GhostStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#7209B7")).Bold(true),
 		MultiplierStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#CA6702")).Bold(true),
 		ShrinkStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#BB3E03")).Bold(true),
+		PoisonStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#AE2012")).Bold(true),
 		BorderStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#94D2BD")).Border(lipgloss.NormalBorder()),
 		TitleStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#005F73")).Bold(true),
 		ScoreStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#0A9396")).Bold(true),
@@ -136,6 +142,7 @@ func HighContrastTheme() Theme {
 		GhostGlyph:      "G ",
 		MultiplierGlyph: "X ",
 		ShrinkGlyph:     "- ",
+		PoisonGlyph:     "! ",
 		HeadStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(lipgloss.Color("#000000")).Bold(true),
 		BodyStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")),
 		FoodStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Blink(true),
@@ -143,6 +150,7 @@ func HighContrastTheme() Theme {
 		GhostStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true),
 		MultiplierStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true),
 		ShrinkStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true),
+		PoisonStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Blink(true),
 		BorderStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Border(lipgloss.ThickBorder()),
 		TitleStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true),
 		ScoreStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true),
@@ -168,6 +176,7 @@ func ColorblindSafeTheme() Theme {
 		GhostGlyph:      "◇ ",
 		MultiplierGlyph: "+ ",
 		ShrinkGlyph:     "/ ",
+		PoisonGlyph:     "✖ ",
 		HeadStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#0072B2")).Bold(true), // Blue
 		BodyStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#56B4E9")),             // Sky Blue
 		FoodStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#D55E00")).Bold(true), // Vermilion
@@ -175,6 +184,7 @@ func ColorblindSafeTheme() Theme {
 		GhostStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#CC79A7")).Bold(true), // Reddish purple
 		MultiplierStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#F0E442")).Bold(true), // Yellow
 		ShrinkStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#E69F00")).Bold(true), // Orange
+		PoisonStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#D55E00")).Bold(true), // Vermilion hazard
 		BorderStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#0072B2")).Border(lipgloss.RoundedBorder()),
 		TitleStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#0072B2")).Bold(true),
 		ScoreStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#56B4E9")).Bold(true),
@@ -200,6 +210,7 @@ func CorporateTheme() Theme {
 		GhostGlyph:      "g ",
 		MultiplierGlyph: "x ",
 		ShrinkGlyph:     "- ",
+		PoisonGlyph:     "! ",
 		HeadStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#A0A0A0")).Bold(true),
 		BodyStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#707070")),
 		FoodStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#C0C0C0")).Bold(true),
@@ -207,6 +218,7 @@ func CorporateTheme() Theme {
 		GhostStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#8A8A8A")),
 		MultiplierStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#A0A0A0")),
 		ShrinkStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#8A8A8A")),
+		PoisonStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#C0392B")).Bold(true),
 		BorderStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("#555555")).Border(lipgloss.NormalBorder()),
 		TitleStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#A0A0A0")),
 		ScoreStyle:      lipgloss.NewStyle().Foreground(lipgloss.Color("#D0D0D0")),

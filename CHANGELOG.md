@@ -5,6 +5,24 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-10-15
+
+### Added
+- **Permanent Food Spawning (One After Another)**: Standard food apples are permanent on the board until eaten and immediately respawn upon consumption.
+- **Concurrent Extra Power Items**: Power-ups and hazard items spawn concurrently alongside permanent food rather than replacing it, remaining on the board for up to 80 ticks before despawning if uneaten.
+- **One-Third Reduced Power-Up Durations**: Rebalanced positive power-up active durations by one-third for tighter, faster-paced gameplay:
+  - `Slow-Mo`: Reduced from 60 to **40 ticks**.
+  - `Ghost Mode`: Reduced from 50 to **34 ticks**.
+  - `3× Multiplier`: Reduced from 70 to **46 ticks**.
+- **Negative Impact Hazard Food (`ItemPoison` / `☠`)**: Introduced avoidable negative food that players must steer around:
+  - **Score Penalty**: Deducts **-30 points** upon ingestion (floored at 0).
+  - **Toxic Speed Surge**: Triggers an active negative status effect accelerating tick rate by **35%** for 25 ticks, drastically increasing crash hazards.
+  - **Unrewarded Body Growth**: Increases snake length by +1 segment without awarding points.
+  - **Theme Glyphs**: Rendered as `☠ ` (Dark), `X ` (Light), `! ` (High-Contrast), `✖ ` (Colorblind-Safe), and `! ` (Corporate).
+- **AI Bot Hazard Avoidance**: Updated autonomous BFS autopilot solver to identify poison hazard food as an unsafe cell and navigate around it.
+- **UI & HUD Enhancements**: Added crimson `⚠️ POISON <ticks>` badge to active HUD status display and included the Hazard glyph (`Hazard:☠`) in the live Sample Board preview legend.
+- **State Persistence**: Savegame snapshot now serializes and restores concurrent bonus point, type, active status, and remaining board lifespan.
+
 ## [1.0.4] - 2026-10-15
 
 ### Added

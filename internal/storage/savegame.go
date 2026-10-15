@@ -15,6 +15,10 @@ type SaveState struct {
 	Direction        engine.Direction `json:"direction"`
 	Food             engine.Point     `json:"food"`
 	FoodType         engine.ItemType  `json:"food_type"`
+	BonusPoint       engine.Point     `json:"bonus_point,omitempty"`
+	BonusType        engine.ItemType  `json:"bonus_type,omitempty"`
+	BonusActive      bool             `json:"bonus_active,omitempty"`
+	BonusExpires     uint64           `json:"bonus_expires,omitempty"`
 	Score            int              `json:"score"`
 	TickCount        uint64           `json:"tick_count"`
 	GrowthPending    int              `json:"growth_pending"`
@@ -49,6 +53,10 @@ func SaveActiveGame(g *engine.Game) error {
 		Direction:        g.Direction,
 		Food:             g.Food,
 		FoodType:         g.FoodType,
+		BonusPoint:       g.BonusPoint,
+		BonusType:        g.BonusType,
+		BonusActive:      g.BonusActive,
+		BonusExpires:     g.BonusExpires,
 		Score:            g.Score,
 		TickCount:        g.TickCount,
 		GrowthPending:    g.GrowthPending,
@@ -61,6 +69,10 @@ func SaveActiveGame(g *engine.Game) error {
 
 	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(ConfigDir(), 0755); err != nil {
 		return err
 	}
 
@@ -94,6 +106,10 @@ func LoadSavedGame() (*engine.Game, error) {
 	g.Direction = state.Direction
 	g.Food = state.Food
 	g.FoodType = state.FoodType
+	g.BonusPoint = state.BonusPoint
+	g.BonusType = state.BonusType
+	g.BonusActive = state.BonusActive
+	g.BonusExpires = state.BonusExpires
 	g.Score = state.Score
 	g.TickCount = state.TickCount
 	g.GrowthPending = state.GrowthPending

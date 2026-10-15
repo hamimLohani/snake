@@ -84,6 +84,7 @@ const (
 	ItemGhost
 	ItemMultiplier
 	ItemShrink
+	ItemPoison
 )
 
 // String returns the name of the item.
@@ -99,6 +100,8 @@ func (it ItemType) String() string {
 		return "Multiplier"
 	case ItemShrink:
 		return "Shrink"
+	case ItemPoison:
+		return "Poison"
 	default:
 		return "Unknown"
 	}
@@ -112,6 +115,7 @@ const (
 	EventMove
 	EventEatFood
 	EventEatPowerUp
+	EventEatHazard
 	EventPowerUpExpire
 	EventWallCollision
 	EventSelfCollision

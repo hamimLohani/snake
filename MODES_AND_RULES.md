@@ -142,15 +142,23 @@ $$\text{Effective Speed} = \max\left(40\text{ ms},\, \text{BaseSpeed} - \left\lf
 
 ## 🎁 Power-Ups & Special Items
 
-In Classic and Survival modes, special edible items spawn with a **15% aggregate chance** upon eating standard food:
+Snake CLI features a dynamic **concurrent spawning model**:
+1. **Permanent Food (One After Another):** Standard food apples are always present on the board. They never despawn over time and immediately respawn upon being eaten.
+2. **Concurrent Extra Power & Hazards:** Alongside permanent food, bonus power-ups and hazardous items spawn concurrently on the grid (persisting up to 80 ticks on the board if left uneaten).
+3. **One-Third Reduced Durations:** Active durations for positive power-ups are streamlined by one-third for tighter, faster-paced strategic windows.
+4. **Negative Impact Hazard Food (Avoid!):** Poison apples must be actively steered around to avoid steep penalties.
 
 | Item | Glyph | Palette Color | Duration | Gameplay Effect |
 |------|-------|---------------|----------|-----------------|
-| **Food** | `★` / `🍎` | Red / Neon Green | Permanent | Awards standard points (+10) and increases snake length by 1. |
-| **Slow-Mo** | `⏱` | Cyan (`#00E5FF`) | 60 ticks | **Halves engine speed** (doubles tick duration). Awards +20 bonus pts. |
-| **Ghost** | `👻` | Purple (`#D500F9`) | 50 ticks | **Phasing ability**: Snake head can pass directly through own body without dying. Awards +20 bonus pts. |
-| **Multiplier** | `⚡` | Gold (`#FFD600`) | 70 ticks | **3× Score Multiplier**: All food eaten while active awards 3× points (+30 pts/food). |
+| **Permanent Food** | `★` / `🍎` | Red / Neon Green | Permanent | Awards standard points (+10 pts, or +25 pts in Time Attack) and grows snake length by 1. Spawns one after another continuously. |
+| **Slow-Mo** | `⏱` | Cyan (`#00E5FF`) | 40 ticks *(reduced 1/3)* | **Halves engine speed** (doubles tick duration). Awards +20 bonus pts. |
+| **Ghost Mode** | `👻` | Purple (`#D500F9`) | 34 ticks *(reduced 1/3)* | **Phasing ability**: Snake head passes safely through its own body segments without dying. Awards +20 bonus pts. |
+| **3× Multiplier** | `⚡` | Gold (`#FFD600`) | 46 ticks *(reduced 1/3)* | **3× Score Multiplier**: Triples score for all food consumed while active. Awards +30 bonus pts. |
 | **Shrink** | `✂` | Orange (`#FF6D00`) | Instant | **Halves snake body length** (minimum 3 segments). Awards +15 bonus pts. |
+| **Poison (Hazard)** | `☠` / `X` / `!` | Crimson (`#FF0055`) | 25 ticks surge | **HAZARD - MUST AVOID!** Incur **-30 pts penalty** (min 0), **+1 unrewarded length**, and triggers a **Toxic Speed Surge** (35% faster tick rate). |
+
+> [!WARNING]
+> **Avoid the Poison (`☠`)!** Eating a poison apple inflicts an immediate -30 point penalty, grows your body without score reward, and causes an uncontrollable 25-tick speed burst that makes tight cornering extremely dangerous.
 
 > [!NOTE]
 > Power-up expiration is tick-based, not clock-based. If the game is paused or you enter the Boss screen, remaining power-up time is preserved.
@@ -199,12 +207,13 @@ $$\text{Points Earned} = \text{Base Points} \times \text{Active Multiplier}$$
 
 | Action / Item | Base Score | With 3× Multiplier Active |
 |---------------|------------|----------------------------|
-| Standard Food (Classic / Survival) | 10 pts | 30 pts |
-| Standard Food (Time Attack) | 25 pts | 75 pts |
-| Slow-Mo Pickup | 20 pts | 60 pts |
-| Ghost Pickup | 20 pts | 60 pts |
-| Multiplier Pickup | 30 pts | 90 pts |
-| Shrink Pickup | 15 pts | 45 pts |
+| Standard Food (Classic / Survival) | +10 pts | +30 pts |
+| Standard Food (Time Attack) | +25 pts | +75 pts |
+| Slow-Mo Pickup | +20 pts | +60 pts |
+| Ghost Pickup | +20 pts | +60 pts |
+| Multiplier Pickup | +30 pts | +90 pts |
+| Shrink Pickup | +15 pts | +45 pts |
+| Poison Hazard (Avoid!) | -30 pts | -30 pts (floored at 0) |
 
 ---
 

@@ -276,4 +276,4 @@ AUTHORS
 SEE ALSO
      htop(1), curses(3)
 
-snake 1.0.4			 October 2026			      SNAKE(6)
+snake 1.0.5			 October 2026			      SNAKE(6)
