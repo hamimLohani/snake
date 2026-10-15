@@ -354,19 +354,12 @@ func (g *Game) TicksForDuration(d time.Duration) uint64 {
 	return ticks
 }
 
-// TargetFoodCount returns the target count of permanent foods on board (multiple food).
+// TargetFoodCount returns the target count of permanent foods on board (single food, respawns immediately).
 func (g *Game) TargetFoodCount() int {
-	width := g.Bounds.MaxX - g.Bounds.MinX
-	if width <= 20 {
-		return 2
-	}
-	if width >= 34 {
-		return 4
-	}
-	return 3
+	return 1
 }
 
-// TargetSpecialCount returns target count of special items on board (powerups + poison hazard).
+// TargetSpecialCount returns target count of special featured items on board (powerup + poison hazard).
 func (g *Game) TargetSpecialCount() int {
 	return 2
 }

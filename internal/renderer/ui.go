@@ -595,10 +595,8 @@ func (m UIModel) renderSampleBoard() string {
 	}
 
 	bodyY := miniH / 2
-	food1X := miniW - 2
-	food1Y := 1
-	food2X := miniW - 2
-	food2Y := miniH - 2
+	foodX := miniW - 2
+	foodY := miniH / 2
 	powerX := 1
 	powerY := miniH - 2
 	hazardX := 1
@@ -621,7 +619,7 @@ func (m UIModel) renderSampleBoard() string {
 				gridBuilder.WriteString(m.Theme.HeadStyle.Render(m.Theme.HeadGlyph("UP")))
 			case (x == miniW/2+1 && y == bodyY) || (x == miniW/2 && y == bodyY) || (x == miniW/2-1 && y == bodyY):
 				gridBuilder.WriteString(m.Theme.BodyStyle.Render(m.Theme.BodyGlyph))
-			case (x == food1X && y == food1Y) || (x == food2X && y == food2Y):
+			case x == foodX && y == foodY:
 				gridBuilder.WriteString(m.Theme.FoodStyle.Render(m.Theme.FoodGlyph))
 			case x == powerX && y == powerY:
 				gridBuilder.WriteString(m.Theme.SlowMoStyle.Render(m.Theme.SlowMoGlyph))

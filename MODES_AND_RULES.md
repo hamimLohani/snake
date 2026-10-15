@@ -142,15 +142,15 @@ $$\text{Effective Speed} = \max\left(40\text{ ms},\, \text{BaseSpeed} - \left\lf
 
 ## 🎁 Power-Ups & Special Items
 
-Snake CLI features a dynamic **concurrent multi-item spawning model**:
-1. **Multiple Simultaneous Foods (One After Another):** Multiple permanent food apples (default 3) coexist on the board at the same time. When any apple is eaten, another immediately respawns so food is always abundant.
-2. **Concurrent Extra Power & Hazards:** Alongside multiple food apples, bonus power-ups and hazardous poison items appear concurrently on the grid (with a 5-second lifespan on the board before rotating if uneaten).
+Snake CLI features a **1 food + multiple featured special items** model:
+1. **Single Permanent Food (One After Another):** One food apple exists at a time. The moment it is eaten, another immediately respawns elsewhere — so food is always present, continuously rotating location.
+2. **Multiple Featured Special Items Simultaneously:** Alongside the single food, **1 positive power-up** and **1 negative poison hazard** are always present on the board at the same time (total 3 active items: food + power-up + poison).
 3. **Calibrated 5-Second Durations:** All active power-up effects, item despawn lifespans, and hazard surges last **5.0 seconds** (e.g. 50 ticks at 100ms BaseTickRate), with an exact live second countdown in the HUD (`Slow-Mo 5.0s`, `⚠️ POISON 5.0s`).
-4. **Negative Impact Hazard Food (Avoid!):** Poison hazard apples (`☠`) are actively rotated onto the board alongside positive power-ups and food apples, requiring players to actively steer around them.
+4. **Negative Impact Hazard Food (Avoid!):** A poison hazard apple (`☠`) is always present on the board concurrently with the power-up, requiring players to actively steer around it.
 
 | Item | Glyph | Palette Color | Duration | Gameplay Effect |
 |------|-------|---------------|----------|-----------------|
-| **Permanent Food (Multiple)** | `★` / `🍎` | Red / Neon Green | Permanent | Awards standard points (+10 pts, or +25 pts in Time Attack) and grows snake length by 1. Multiple apples are active at once and respawn continuously one after another. |
+| **Food (Single)** | `★` / `🍎` | Red / Neon Green | Permanent | Awards standard points (+10 pts, or +25 pts in Time Attack) and grows snake length by 1. One apple at a time — immediately respawns upon being eaten ("one after another"). |
 | **Slow-Mo** | `⏱` | Cyan (`#00E5FF`) | **5.0 seconds** | **Halves engine speed** (doubles tick duration). Awards +20 bonus pts. |
 | **Ghost Mode** | `👻` | Purple (`#D500F9`) | **5.0 seconds** | **Phasing ability**: Snake head passes safely through its own body segments without dying. Awards +20 bonus pts. |
 | **3× Multiplier** | `⚡` | Gold (`#FFD600`) | **5.0 seconds** | **3× Score Multiplier**: Triples score for all food consumed while active. Awards +30 bonus pts. |

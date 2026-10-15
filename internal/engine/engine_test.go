@@ -443,7 +443,7 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 
 	game := New(cfg)
 
-	// Board should contain multiple food apples (TargetFoodCount is 3)
+	// Board should contain 1 permanent food + multiple featured special items
 	foodCount := 0
 	hasPoison := false
 	hasPowerUp := false
@@ -458,8 +458,8 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 		}
 	}
 
-	if foodCount < 2 {
-		t.Errorf("Expected at least 2 simultaneous permanent foods on board, got %d", foodCount)
+	if foodCount != 1 {
+		t.Errorf("Expected exactly 1 permanent food on board, got %d", foodCount)
 	}
 	if !hasPoison {
 		t.Errorf("Expected negative poison hazard food to be present on board")
@@ -468,7 +468,7 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 		t.Errorf("Expected a bonus power-up to be present on board")
 	}
 
-	// Eating one food apple immediately replenishes another ("permanent will come one after another")
+	// Eating the food immediately respawns another ("one after another")
 	var targetFood Point
 	for _, item := range game.FoodItems {
 		if item.Type == ItemFood {
@@ -489,8 +489,8 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 		}
 	}
 
-	if newFoodCount < 2 {
-		t.Errorf("Expected permanent food to immediately replenish, got %d", newFoodCount)
+	if newFoodCount != 1 {
+		t.Errorf("Expected food to immediately respawn (1 food), got %d", newFoodCount)
 	}
 }
 

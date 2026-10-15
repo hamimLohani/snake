@@ -175,7 +175,7 @@ All keys are fully rebindable in `~/.config/snake/config.toml`:
 
 ## ⚡ Power-Ups & Special Items
  
-Multiple permanent food apples co-exist on the grid and respawn continuously one after another. Concurrently alongside food, positive power-ups and hazardous poison items appear on the grid (active effects and board lifespans are calibrated to **5.0 seconds**):
+One permanent food apple exists at a time and immediately respawns when eaten ("one after another"). Alongside the food, **multiple featured special items appear simultaneously** — 1 positive power-up and 1 negative poison hazard are always active concurrently (5.0 second lifespan each if uneaten):
  
 - ⏱ **Slow-Mo** (Cyan): Halves tick speed for **5.0 seconds**.
 - 👻 **Ghost** (Purple): Enables passing through your own body segments without crashing for **5.0 seconds**.
