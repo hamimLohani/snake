@@ -142,11 +142,11 @@ $$\text{Effective Speed} = \max\left(40\text{ ms},\, \text{BaseSpeed} - \left\lf
 
 ## 🎁 Power-Ups & Special Items
 
-Snake CLI features a **1 food + multiple featured special items** model:
-1. **Single Permanent Food (One After Another):** One food apple exists at a time. The moment it is eaten, another immediately respawns elsewhere — so food is always present, continuously rotating location.
-2. **Multiple Featured Special Items Simultaneously:** Alongside the single food, **1 positive power-up** and **1 negative poison hazard** are always present on the board at the same time (total 3 active items: food + power-up + poison).
-3. **Calibrated 5-Second Durations:** All active power-up effects, item despawn lifespans, and hazard surges last **5.0 seconds** (e.g. 50 ticks at 100ms BaseTickRate), with an exact live second countdown in the HUD (`Slow-Mo 5.0s`, `⚠️ POISON 5.0s`).
-4. **Negative Impact Hazard Food (Avoid!):** A poison hazard apple (`☠`) is always present on the board concurrently with the power-up, requiring players to actively steer around it.
+Snake CLI features a **1 food + multiple concurrent special items** model:
+1. **Single Food (One After Another):** One food apple exists at a time. The moment it is eaten, another immediately respawns elsewhere — always present, always rotating.
+2. **2–3 Featured Special Items Simultaneously:** Alongside the food, **2–3 special items coexist on the board at the same time**: 1 guaranteed poison hazard + 1–2 positive power-ups (small boards get 2, medium/large boards get 3). Each special item lasts 5.0 seconds on the board before despawning if uneaten — then a fresh one appears in a new location.
+3. **Calibrated 5-Second Durations:** All active power-up effects, item despawn lifespans, and hazard surges last **5.0 seconds**, with an exact live second countdown in the HUD (`Slow-Mo 5.0s`, `⚠️ POISON 5.0s`).
+4. **Negative Impact Hazard Food (Avoid!):** A poison hazard apple (`☠`) is **always present concurrently** with the power-up(s), requiring players to actively steer around it at all times.
 
 | Item | Glyph | Palette Color | Duration | Gameplay Effect |
 |------|-------|---------------|----------|-----------------|

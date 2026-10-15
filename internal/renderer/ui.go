@@ -597,8 +597,10 @@ func (m UIModel) renderSampleBoard() string {
 	bodyY := miniH / 2
 	foodX := miniW - 2
 	foodY := miniH / 2
-	powerX := 1
-	powerY := miniH - 2
+	power1X := 1
+	power1Y := miniH - 2
+	power2X := miniW - 2
+	power2Y := 1
 	hazardX := 1
 	hazardY := 1
 
@@ -621,8 +623,10 @@ func (m UIModel) renderSampleBoard() string {
 				gridBuilder.WriteString(m.Theme.BodyStyle.Render(m.Theme.BodyGlyph))
 			case x == foodX && y == foodY:
 				gridBuilder.WriteString(m.Theme.FoodStyle.Render(m.Theme.FoodGlyph))
-			case x == powerX && y == powerY:
+			case x == power1X && y == power1Y:
 				gridBuilder.WriteString(m.Theme.SlowMoStyle.Render(m.Theme.SlowMoGlyph))
+			case x == power2X && y == power2Y:
+				gridBuilder.WriteString(m.Theme.MultiplierStyle.Render(m.Theme.MultiplierGlyph))
 			case x == hazardX && y == hazardY:
 				gridBuilder.WriteString(m.Theme.PoisonStyle.Render(m.Theme.PoisonGlyph))
 			case m.SelectedObstacles && ((x == miniW/2-2 && y == miniH/2-2) || (x == miniW/2+2 && y == miniH/2+1)):
@@ -652,11 +656,12 @@ func (m UIModel) renderSampleBoard() string {
 		m.Theme.TitleStyle.Render("[ "+strings.ToUpper(m.Theme.Name)+" ]"),
 	)
 
-	legend := fmt.Sprintf("Head:%s Body:%s Food:%s Power:%s Hazard:%s",
+	legend := fmt.Sprintf("Head:%s Body:%s Food:%s Power:%s%s Hazard:%s",
 		m.Theme.HeadStyle.Render(m.Theme.HeadGlyph("UP")),
 		m.Theme.BodyStyle.Render(m.Theme.BodyGlyph),
 		m.Theme.FoodStyle.Render(m.Theme.FoodGlyph),
 		m.Theme.SlowMoStyle.Render(m.Theme.SlowMoGlyph),
+		m.Theme.MultiplierStyle.Render(m.Theme.MultiplierGlyph),
 		m.Theme.PoisonStyle.Render(m.Theme.PoisonGlyph),
 	)
 	if m.SelectedObstacles {

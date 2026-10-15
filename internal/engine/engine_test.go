@@ -435,7 +435,7 @@ func TestNegativeImpactPoisonFood(t *testing.T) {
 	}
 }
 
-func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
+func TestOneFoodMultipleSpecials(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Width = 24
 	cfg.Height = 20
@@ -443,10 +443,10 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 
 	game := New(cfg)
 
-	// Board should contain 1 permanent food + multiple featured special items
+	// Board: 1 permanent food + 3 specials (1 poison + 2 powerups) on 24-wide board
 	foodCount := 0
+	powerUpCount := 0
 	hasPoison := false
-	hasPowerUp := false
 	for _, item := range game.FoodItems {
 		switch item.Type {
 		case ItemFood:
@@ -454,21 +454,28 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 		case ItemPoison:
 			hasPoison = true
 		default:
-			hasPowerUp = true
+			powerUpCount++
 		}
 	}
 
 	if foodCount != 1 {
-		t.Errorf("Expected exactly 1 permanent food on board, got %d", foodCount)
+		t.Errorf("Expected exactly 1 permanent food, got %d", foodCount)
 	}
 	if !hasPoison {
-		t.Errorf("Expected negative poison hazard food to be present on board")
+		t.Errorf("Expected poison hazard always present on board")
 	}
-	if !hasPowerUp {
-		t.Errorf("Expected a bonus power-up to be present on board")
+	if powerUpCount < 1 {
+		t.Errorf("Expected at least 1 positive power-up concurrently, got %d", powerUpCount)
+	}
+	totalSpecials := powerUpCount
+	if hasPoison {
+		totalSpecials++
+	}
+	if totalSpecials < 2 {
+		t.Errorf("Expected 2-3 special items total, got %d", totalSpecials)
 	}
 
-	// Eating the food immediately respawns another ("one after another")
+	// Eating the food immediately respawns a new one ("one after another")
 	var targetFood Point
 	for _, item := range game.FoodItems {
 		if item.Type == ItemFood {
@@ -477,7 +484,6 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 		}
 	}
 
-	// Move snake directly onto targetFood
 	game.Snake = []Point{{X: targetFood.X - 1, Y: targetFood.Y}}
 	game.Direction = DirRight
 	game.Tick()
@@ -490,7 +496,7 @@ func TestMultipleFoodsCoexistenceAndRespawn(t *testing.T) {
 	}
 
 	if newFoodCount != 1 {
-		t.Errorf("Expected food to immediately respawn (1 food), got %d", newFoodCount)
+		t.Errorf("Expected food to immediately respawn (always 1 food), got %d", newFoodCount)
 	}
 }
 

@@ -359,9 +359,14 @@ func (g *Game) TargetFoodCount() int {
 	return 1
 }
 
-// TargetSpecialCount returns target count of special featured items on board (powerup + poison hazard).
+// TargetSpecialCount returns target count of special featured items on board (1 poison + N powerups).
+// Small boards get 2 specials, medium/large get 3 specials.
 func (g *Game) TargetSpecialCount() int {
-	return 2
+	width := g.Bounds.MaxX - g.Bounds.MinX
+	if width <= 20 {
+		return 2 // small board: 1 poison + 1 powerup
+	}
+	return 3 // medium/large board: 1 poison + 2 powerups
 }
 
 // ItemAt returns the item type and true if an item exists at pt.
