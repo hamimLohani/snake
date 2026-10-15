@@ -1,8 +1,8 @@
 class Snake < Formula
   desc "Modern developer-grade terminal Snake game with replays and boss key"
   homepage "https://github.com/hamimlohani/snake"
-  url "https://github.com/hamimlohani/snake/archive/refs/tags/v1.0.7.tar.gz"
-  sha256 "4c09834bf8f212d0e1f5084e51d3a4f0d234c35c1d44d9b2692a871c1a53e580"
+  url "https://github.com/hamimlohani/snake/archive/refs/tags/v1.0.8.tar.gz"
+  sha256 "2905533506ed5f467a8468860207eec88434b98e5aa52d38930776f3c2163f23"
   license "MIT"
   head "https://github.com/hamimlohani/snake.git", branch: "main"
 
