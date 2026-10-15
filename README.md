@@ -270,6 +270,12 @@ make lint
 
 ---
 
+## 👤 Author
+
+**Md. Inzamamul Lohani** ([@hamimLohani](https://github.com/hamimLohani))
+
+---
+
 ## 📄 License
 
-MIT License. Crafted with clean engineering standards for developers everywhere.
+MIT License © 2026 Md. Inzamamul Lohani. Crafted with clean engineering standards for developers everywhere.

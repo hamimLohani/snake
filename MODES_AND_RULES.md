@@ -265,3 +265,10 @@ When running `snake` or `snake play` without flags, the game opens directly into
 > - `snake play --size small`
 > - `snake play -s large`
 > - `snake play --size 30x15` (custom Width × Height)
+
+---
+
+## 👤 Author
+
+**Md. Inzamamul Lohani** ([@hamimLohani](https://github.com/hamimLohani))
+

@@ -16,7 +16,9 @@ var rootCmd = &cobra.Command{
 	Short: "snake - A modern, developer-grade terminal Snake game",
 	Long: `snake is a professional, production-quality terminal Snake game built for
 developers taking a coffee break. Features classic and modern game modes,
-power-ups, boss key, replays, seed sharing, and customizable themes.`,
+power-ups, boss key, replays, seed sharing, and customizable themes.
+
+Author: Md. Inzamamul Lohani (@hamimLohani)`,
 	Version: version,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default to running 'snake play' if no subcommand is given
