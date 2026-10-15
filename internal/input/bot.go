@@ -87,6 +87,21 @@ func (b *BotSolver) NextMove(g *engine.Game) engine.Direction {
 }
 
 func (b *BotSolver) isCellSafe(g *engine.Game, p engine.Point) bool {
+	isGhost := g.ActivePowerUp != nil && g.ActivePowerUp.Type == engine.ItemGhost
+	if g.Config.Mode == engine.ModeZen || isGhost {
+		// In Zen mode or Ghost, walls, obstacles, and body overlap are safe
+		// Only avoid poison hazard
+		if g.BonusActive && g.BonusType == engine.ItemPoison && p == g.BonusPoint {
+			return false
+		}
+		for _, item := range g.FoodItems {
+			if item.Type == engine.ItemPoison && item.Point == p {
+				return false
+			}
+		}
+		return true
+	}
+
 	// Wall check
 	if p.X < g.Bounds.MinX || p.X >= g.Bounds.MaxX || p.Y < g.Bounds.MinY || p.Y >= g.Bounds.MaxY {
 		return false
@@ -125,6 +140,7 @@ func (b *BotSolver) findPathBFS(g *engine.Game, start, target engine.Point) []en
 	visited[start] = true
 
 	directions := []engine.Direction{engine.DirUp, engine.DirDown, engine.DirLeft, engine.DirRight}
+	isGhost := g.ActivePowerUp != nil && g.ActivePowerUp.Type == engine.ItemGhost
 
 	found := false
 	for len(queue) > 0 {
@@ -139,6 +155,19 @@ func (b *BotSolver) findPathBFS(g *engine.Game, start, target engine.Point) []en
 		for _, dir := range directions {
 			dx, dy := dir.Delta()
 			neighbor := engine.Point{X: curr.X + dx, Y: curr.Y + dy}
+
+			if g.Config.Mode == engine.ModeZen || isGhost {
+				if neighbor.X < g.Bounds.MinX {
+					neighbor.X = g.Bounds.MaxX - 1
+				} else if neighbor.X >= g.Bounds.MaxX {
+					neighbor.X = g.Bounds.MinX
+				}
+				if neighbor.Y < g.Bounds.MinY {
+					neighbor.Y = g.Bounds.MaxY - 1
+				} else if neighbor.Y >= g.Bounds.MaxY {
+					neighbor.Y = g.Bounds.MinY
+				}
+			}
 
 			// If neighbor is target, it is allowed even if occupied
 			if neighbor == target || b.isCellSafe(g, neighbor) {
@@ -200,16 +229,18 @@ func (b *BotSolver) simulateStep(g *engine.Game, nextHead engine.Point) *engine.
 }
 
 func (b *BotSolver) directionFromPoints(from, to engine.Point) engine.Direction {
-	switch {
-	case to.X > from.X:
-		return engine.DirRight
-	case to.X < from.X:
+	// Handle toroidal screen wrapping
+	if to.X == from.X-1 || to.X > from.X+1 {
 		return engine.DirLeft
-	case to.Y > from.Y:
-		return engine.DirDown
-	case to.Y < from.Y:
-		return engine.DirUp
-	default:
-		return engine.DirNone
 	}
+	if to.X == from.X+1 || to.X < from.X-1 {
+		return engine.DirRight
+	}
+	if to.Y == from.Y-1 || to.Y > from.Y+1 {
+		return engine.DirUp
+	}
+	if to.Y == from.Y+1 || to.Y < from.Y-1 {
+		return engine.DirDown
+	}
+	return engine.DirNone
 }

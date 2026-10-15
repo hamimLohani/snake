@@ -5,6 +5,16 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2026-10-15
+
+### Added
+- **10s Zen Mode for Ghost Power-Up (`👻`)**: Eating a Ghost power-up now activates full **Zen Mode for 10.0 seconds**:
+  - **Wall Wrapping**: Running into walls no longer stops the game; the snake smoothly wraps around the arena boundaries.
+  - **Body Overlap Phasing**: The snake passes harmlessly through its own body segments without self-collision.
+  - **Obstacle Phasing**: Safe passage directly through procedural obstacles.
+  - **Live HUD Badge**: Purple `👻 ZEN MODE 10.0s` live countdown displayed in the HUD.
+  - **AI Autopilot Awareness**: Autonomous BFS bot recognizes walls and body overlaps as safe during the 10-second Zen window.
+
 ## [1.0.7] - 2026-10-15
 
 ### Added

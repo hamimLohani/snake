@@ -178,7 +178,7 @@ All keys are fully rebindable in `~/.config/snake/config.toml`:
 One food apple exists at a time and immediately respawns when eaten ("one after another"). Alongside the food, **2–3 featured special items appear simultaneously** — 1 guaranteed poison hazard + 1–2 positive power-ups (5.0 second lifespan each, then rotate to a new location):
  
 - ⏱ **Slow-Mo** (Cyan): Halves tick speed for **5.0 seconds**.
-- 👻 **Ghost** (Purple): Enables passing through your own body segments without crashing for **5.0 seconds**.
+- 👻 **Ghost** (Purple): Activates **Zen Mode for 10.0 seconds** — walls do not stop the game (wrap-around), obstacles are phased through, and body overlap is permitted.
 - ⚡ **3x Multiplier** (Gold): Triples points earned for **5.0 seconds**.
 - ✂ **Shrink** (Orange): Cuts snake body length in half upon eating.
 - ☠ **Poison (Hazard - Avoid!)** (Crimson): Deducts -30 points, adds +1 unrewarded length, and triggers an uncontrollable **Toxic Speed Surge** (2x speed) for **5.0 seconds**!

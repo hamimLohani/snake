@@ -178,7 +178,7 @@ func TestGhostPowerUp(t *testing.T) {
 		ExpiresAtTick: 100,
 	}
 
-	// Loop back onto itself
+	// 1. Loop back onto itself (verify overlap)
 	game.QueueDirection(DirUp)
 	game.Tick()
 	game.QueueDirection(DirLeft)
@@ -187,7 +187,41 @@ func TestGhostPowerUp(t *testing.T) {
 	game.Tick()
 
 	if game.GameOver {
-		t.Errorf("Ghost power-up should allow passing through own body without death: %s", game.GameOverReason)
+		t.Errorf("Ghost power-up should allow passing through own body (overlap) without death: %s", game.GameOverReason)
+	}
+
+	// 2. Drive into wall (verify 10s Zen mode wall-wrap)
+	game.Snake[0] = Point{X: 9, Y: 5}
+	game.Direction = DirRight
+	game.QueueDirection(DirRight)
+	game.Tick()
+
+	if game.GameOver {
+		t.Errorf("Ghost power-up should allow wrapping around walls without death: %s", game.GameOverReason)
+	}
+	if game.Snake[0].X != 0 {
+		t.Errorf("Expected head to wrap around wall to X=0, got X=%d", game.Snake[0].X)
+	}
+
+	// 3. Drive into obstacle (verify obstacle phasing)
+	game.Obstacles[Point{X: 1, Y: 5}] = true
+	game.Direction = DirRight
+	game.QueueDirection(DirRight)
+	game.Tick()
+
+	if game.GameOver {
+		t.Errorf("Ghost power-up should allow passing through obstacles without death: %s", game.GameOverReason)
+	}
+
+	// 4. Once Ghost expires, hitting wall causes Game Over
+	game.ActivePowerUp = nil
+	game.Snake[0] = Point{X: 9, Y: 5}
+	game.Direction = DirRight
+	game.QueueDirection(DirRight)
+	game.Tick()
+
+	if !game.GameOver {
+		t.Errorf("After Ghost expires, hitting wall should trigger Game Over")
 	}
 }
 
@@ -332,8 +366,9 @@ func TestBonusDurationFiveSeconds(t *testing.T) {
 		t.Errorf("Expected SlowMo duration to be 5s (%d ticks), got %d ticks", ticks5s, g1.ActivePowerUp.ExpiresAtTick-g1.TickCount)
 	}
 
-	// 2. Ghost: 5 seconds
+	// 2. Ghost (Zen Mode): 10 seconds
 	g2 := New(cfg)
+	ticks10s := g2.TicksForDuration(10 * time.Second)
 	g2.FoodItems = nil
 	head2 := g2.Snake[0]
 	g2.BonusPoint = Point{X: head2.X + 1, Y: head2.Y}
@@ -344,8 +379,8 @@ func TestBonusDurationFiveSeconds(t *testing.T) {
 	if g2.ActivePowerUp == nil || g2.ActivePowerUp.Type != ItemGhost {
 		t.Fatalf("Expected ActivePowerUp Ghost")
 	}
-	if g2.ActivePowerUp.ExpiresAtTick != g2.TickCount+ticks5s {
-		t.Errorf("Expected Ghost duration to be 5s (%d ticks), got %d ticks", ticks5s, g2.ActivePowerUp.ExpiresAtTick-g2.TickCount)
+	if g2.ActivePowerUp.ExpiresAtTick != g2.TickCount+ticks10s {
+		t.Errorf("Expected Ghost Zen Mode duration to be 10s (%d ticks), got %d ticks", ticks10s, g2.ActivePowerUp.ExpiresAtTick-g2.TickCount)
 	}
 
 	// 3. Multiplier: 5 seconds

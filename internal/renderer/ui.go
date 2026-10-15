@@ -902,6 +902,9 @@ func (m UIModel) renderRichGame() string {
 		if m.Game.ActivePowerUp.Type == engine.ItemPoison {
 			badgeBg = lipgloss.Color("#D50000")
 			badgeText = fmt.Sprintf("⚠️ POISON %.1fs", secsRemaining)
+		} else if m.Game.ActivePowerUp.Type == engine.ItemGhost {
+			badgeBg = lipgloss.Color("#7209B7")
+			badgeText = fmt.Sprintf("👻 ZEN MODE %.1fs", secsRemaining)
 		}
 		pBadge := lipgloss.NewStyle().
 			Background(badgeBg).

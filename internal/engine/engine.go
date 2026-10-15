@@ -152,9 +152,13 @@ func (g *Game) Tick() []Event {
 
 	// 2. Check active power-up expiration
 	if g.ActivePowerUp != nil && g.TickCount >= g.ActivePowerUp.ExpiresAtTick {
+		expireMsg := fmt.Sprintf("%s wore off", g.ActivePowerUp.Type.String())
+		if g.ActivePowerUp.Type == ItemGhost {
+			expireMsg = "Zen Mode wore off"
+		}
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:    EventPowerUpExpire,
-			Message: fmt.Sprintf("%s wore off", g.ActivePowerUp.Type.String()),
+			Message: expireMsg,
 		})
 		if g.ActivePowerUp.Type == ItemMultiplier {
 			g.ScoreMultiplier = 1
@@ -214,10 +218,9 @@ func (g *Game) Tick() []Event {
 	head := Point{X: g.Snake[0].X + dx, Y: g.Snake[0].Y + dy}
 
 	// 5. Handle boundaries & wrapping
-	if g.Config.Mode == ModeZen {
-		// Zen wraps around boundaries
-		width := g.Bounds.MaxX - g.Bounds.MinX
-		height := g.Bounds.MaxY - g.Bounds.MinY
+	isGhost := g.ActivePowerUp != nil && g.ActivePowerUp.Type == ItemGhost
+	if g.Config.Mode == ModeZen || isGhost {
+		// Zen & Ghost wrap around boundaries safely without game over
 		if head.X < g.Bounds.MinX {
 			head.X = g.Bounds.MaxX - 1
 		} else if head.X >= g.Bounds.MaxX {
@@ -228,8 +231,6 @@ func (g *Game) Tick() []Event {
 		} else if head.Y >= g.Bounds.MaxY {
 			head.Y = g.Bounds.MinY
 		}
-		_ = width
-		_ = height
 	} else {
 		// Wall collision checks
 		if head.X < g.Bounds.MinX || head.X >= g.Bounds.MaxX || head.Y < g.Bounds.MinY || head.Y >= g.Bounds.MaxY {
@@ -269,7 +270,6 @@ func (g *Game) Tick() []Event {
 	}
 
 	// 6. Self collision check (unless Zen or Ghost powerup is active)
-	isGhost := g.ActivePowerUp != nil && g.ActivePowerUp.Type == ItemGhost
 	if g.Config.Mode != ModeZen && !isGhost {
 		// Tail moves unless growth is pending
 		bodyToCheck := g.Snake
@@ -446,13 +446,14 @@ func (g *Game) applyItemEffect(item FoodItem) {
 			Message:  "Slow-Mo Activated! (5s)",
 		})
 	case ItemGhost:
-		g.ActivePowerUp = &ActivePowerUp{Type: ItemGhost, ExpiresAtTick: g.TickCount + ticks5s}
+		ticks10s := g.TicksForDuration(10 * time.Second)
+		g.ActivePowerUp = &ActivePowerUp{Type: ItemGhost, ExpiresAtTick: g.TickCount + ticks10s}
 		g.Score += 20 * g.ScoreMultiplier
 		g.LastEvents = append(g.LastEvents, Event{
 			Type:     EventEatPowerUp,
 			Position: item.Point,
 			Score:    20 * g.ScoreMultiplier,
-			Message:  "Ghost Mode Activated! (5s)",
+			Message:  "👻 Zen Mode Activated! (10s: Wall Wrap & Overlap)",
 		})
 	case ItemMultiplier:
 		g.ActivePowerUp = &ActivePowerUp{Type: ItemMultiplier, ExpiresAtTick: g.TickCount + ticks5s}

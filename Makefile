@@ -1,7 +1,7 @@
 BINARY_NAME=snake
 BIN_DIR=bin
 DIST_DIR=dist
-VERSION?=$(shell git describe --tags --always 2>/dev/null || echo "1.0.7")
+VERSION?=$(shell git describe --tags --always 2>/dev/null || echo "1.0.8")
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION)"
 
 .PHONY: all build test lint clean install run man release help

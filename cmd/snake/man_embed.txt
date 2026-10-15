@@ -174,8 +174,9 @@ POWER-UPS & SPECIAL ITEMS
 	    Halves snake movement speed for 5.0 seconds.
 
      Ghost (👻
-	    Allows the snake to phase through its own body segments without
-	    crashing for 5.0 seconds.
+	    Enters Zen Mode for 10.0 seconds: walls do not stop the game
+	    (wrap-around), obstacles are phased through, and full body overlap
+	    is allowed.
 
      3x Multiplier (⚡
 	    Triples all points awarded for 5.0 seconds.
@@ -287,4 +288,4 @@ AUTHORS
 SEE ALSO
      htop(1), curses(3)
 
-snake 1.0.7			 October 2026			      SNAKE(6)
+snake 1.0.8			 October 2026			      SNAKE(6)

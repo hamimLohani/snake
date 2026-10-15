@@ -152,7 +152,7 @@ Snake CLI features a **1 food + multiple concurrent special items** model:
 |------|-------|---------------|----------|-----------------|
 | **Food (Single)** | `★` / `🍎` | Red / Neon Green | Permanent | Awards standard points (+10 pts, or +25 pts in Time Attack) and grows snake length by 1. One apple at a time — immediately respawns upon being eaten ("one after another"). |
 | **Slow-Mo** | `⏱` | Cyan (`#00E5FF`) | **5.0 seconds** | **Halves engine speed** (doubles tick duration). Awards +20 bonus pts. |
-| **Ghost Mode** | `👻` | Purple (`#D500F9`) | **5.0 seconds** | **Phasing ability**: Snake head passes safely through its own body segments without dying. Awards +20 bonus pts. |
+| **Ghost Mode** | `👻` | Purple (`#D500F9`) | **10.0 seconds** | **Temporary Zen Mode**: For the next 10 seconds, walls do not stop the game (toroidal wrap-around), obstacles are safely phased through, and snake head passes harmlessly through its own body (full overlap allowed). Awards +20 bonus pts. |
 | **3× Multiplier** | `⚡` | Gold (`#FFD600`) | **5.0 seconds** | **3× Score Multiplier**: Triples score for all food consumed while active. Awards +30 bonus pts. |
 | **Shrink** | `✂` | Orange (`#FF6D00`) | Instant | **Halves snake body length** (minimum 3 segments). Awards +15 bonus pts. |
 | **Poison (Hazard)** | `☠` / `X` / `!` | Crimson (`#FF0055`) | **5.0 seconds** surge | **HAZARD - MUST AVOID!** Incur **-30 pts penalty** (min 0), **+1 unrewarded length**, and triggers a **Toxic Speed Surge** (doubles speed: `TickRate / 2`). |
