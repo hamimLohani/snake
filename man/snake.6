@@ -1,4 +1,4 @@
-.TH SNAKE 6 "October 2026" "snake 1.0.6" "Games Manual"
+.TH SNAKE 6 "October 2026" "snake 1.0.7" "Games Manual"
 .SH NAME
 snake \- professional terminal snake game for developers
 .SH SYNOPSIS
@@ -162,10 +162,10 @@ Stress-free, meditative mode. Border collisions wrap around to the opposite side
 and the snake passes harmlessly through its own body. No Game Over state is possible.
 
 .SH POWER-UPS & SPECIAL ITEMS
-Multiple permanent food apples co-exist on the grid and respawn continuously one after another. Concurrently alongside food, positive power-ups and hazardous poison items appear on the grid (active effects and board lifespans last 5.0 seconds):
+One permanent food apple exists on the grid and respawns immediately when eaten ("one after another"). Concurrently alongside food, 2\(en3 special items appear on the grid (1 guaranteed poison hazard + 1\(en2 power-ups; active effects and board lifespans last 5.0 seconds):
 .TP
-.B Permanent Food (Multiple)
-Standard food apples that award points and grow snake length. Multiple apples are active at once and respawn continuously one after another.
+.B Permanent Food (Single)
+Standard food apple that awards points and grows snake length. Exactly one apple exists at a time and respawns immediately upon being eaten ("one after another").
 .TP
 .B Slow-Mo (⏱)
 Halves snake movement speed for 5.0 seconds.

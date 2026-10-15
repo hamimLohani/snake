@@ -1,4 +1,4 @@
-.TH SNAKE 1 "October 2026" "snake 1.0.6" "User Commands"
+.TH SNAKE 1 "October 2026" "snake 1.0.7" "User Commands"
 .SH NAME
 snake \- professional terminal snake game for developers
 .SH SYNOPSIS
@@ -161,20 +161,26 @@ Dynamic shrinking arena. Every 50 ticks, the perimeter walls contract inward by 
 Stress-free, meditative mode. Border collisions wrap around to the opposite side of the grid,
 and the snake passes harmlessly through its own body. No Game Over state is possible.
 
-.SH POWER-UPS
-During gameplay, special items appear on the grid in addition to standard food:
+.SH POWER-UPS & SPECIAL ITEMS
+One permanent food apple exists on the grid and respawns immediately when eaten ("one after another"). Concurrently alongside food, 2\(en3 special items appear on the grid (1 guaranteed poison hazard + 1\(en2 power-ups; active effects and board lifespans last 5.0 seconds):
+.TP
+.B Permanent Food (Single)
+Standard food apple that awards points and grows snake length. Exactly one apple exists at a time and respawns immediately upon being eaten ("one after another").
 .TP
 .B Slow-Mo (⏱)
-Halves snake movement speed for 60 ticks.
+Halves snake movement speed for 5.0 seconds.
 .TP
 .B Ghost (👻)
-Allows the snake to phase through its own body segments without crashing for 50 ticks.
+Allows the snake to phase through its own body segments without crashing for 5.0 seconds.
 .TP
 .B 3x Multiplier (⚡)
-Triples all points awarded for 70 ticks.
+Triples all points awarded for 5.0 seconds.
 .TP
 .B Shrink (✂)
 Immediately cuts the snake's length in half upon consumption.
+.TP
+.B Poison (☠) [Hazard - Avoid!]
+Deducts -30 points, adds +1 unrewarded length, and triggers an uncontrollable 5.0-second Toxic Speed Surge (2x speed)!
 
 .SH THE BOSS KEY
 Pressing \fBb\fR or \fBEsc\fR instantly conceals the game and displays a convincing fake terminal screen:

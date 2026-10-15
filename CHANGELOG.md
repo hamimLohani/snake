@@ -5,6 +5,16 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2026-10-15
+
+### Added
+- **Single Food (One After Another)**: Exactly one permanent food apple appears on the board at a time and respawns immediately upon consumption.
+- **Concurrent Featured Specials (2–3 Items Simultaneously)**:
+  - 1 Poison hazard (`☠`) is continuously present alongside the power-up(s) to actively dodge.
+  - 1–2 positive power-ups (`⏱` Slow-Mo, `👻` Ghost, `⚡` Multiplier, `✂` Shrink) appear simultaneously with the poison and the food (2 specials on small boards, 3 specials on medium/large boards).
+  - Special featured items despawn and rotate every 5.0 seconds if uneaten.
+- **Updated Sample Board Preview**: Menu preview updated to reflect the 1 food + 2-3 concurrent specials model with poison hazard indicator.
+
 ## [1.0.6] - 2026-10-15
 
 ### Added
