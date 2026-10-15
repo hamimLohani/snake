@@ -9,8 +9,6 @@ import (
 
 var (
 	version = "1.0.7"
-	commit  = "none"
-	date    = "unknown"
 )
 
 var rootCmd = &cobra.Command{
@@ -19,7 +17,7 @@ var rootCmd = &cobra.Command{
 	Long: `snake is a professional, production-quality terminal Snake game built for
 developers taking a coffee break. Features classic and modern game modes,
 power-ups, boss key, replays, seed sharing, and customizable themes.`,
-	Version: fmt.Sprintf("%s (commit: %s, built: %s)", version, commit, date),
+	Version: version,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default to running 'snake play' if no subcommand is given
 		playCmd.Run(cmd, args)
