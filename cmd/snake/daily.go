@@ -70,6 +70,6 @@ var dailyCmd = &cobra.Command{
 }
 
 func init() {
-	dailyCmd.Flags().StringVar(&dailyTheme, "theme", "", "Visual theme override")
+	dailyCmd.Flags().StringVarP(&dailyTheme, "theme", "t", "", "Visual theme override")
 	rootCmd.AddCommand(dailyCmd)
 }

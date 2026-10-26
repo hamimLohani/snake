@@ -109,6 +109,6 @@ func init() {
 	botCmd.Flags().IntVar(&botTicks, "ticks", 1500, "Maximum ticks to simulate in headless mode")
 	botCmd.Flags().Int64Var(&botSeed, "seed", 0, "Deterministic RNG seed")
 	botCmd.Flags().IntVar(&botSpeedMs, "speed", 0, "Override visual tick speed in ms (default 65ms)")
-	botCmd.Flags().StringVar(&botTheme, "theme", "", "Visual theme override")
+	botCmd.Flags().StringVarP(&botTheme, "theme", "t", "", "Visual theme override")
 	rootCmd.AddCommand(botCmd)
 }

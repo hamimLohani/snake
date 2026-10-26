@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -94,7 +95,11 @@ func SaveStats(st Stats) error {
 func (st *Stats) RecordGame(entry ScoreEntry) (isNewHigh bool, unlockedAchievements []string) {
 	st.TotalGames++
 	st.TotalPlayTimeSec += entry.DurationSec
-	st.TotalFoodEaten += entry.Length - 3 // Approximate food eaten
+	foodEaten := entry.Length - 3
+	if foodEaten < 0 {
+		foodEaten = 0
+	}
+	st.TotalFoodEaten += foodEaten
 
 	currentHigh := st.HighScores[entry.Mode]
 	if entry.Score > currentHigh {
@@ -137,14 +142,16 @@ func (st *Stats) checkAchievements(entry ScoreEntry) []string {
 
 // ExportCSV outputs leaderboard as CSV string.
 func (st *Stats) ExportCSV() (string, error) {
-	var buf os.File
-	_ = buf
-	out := [][]string{
-		{"Rank", "Date", "Mode", "Score", "Length", "DurationSec", "Seed"},
+	var buf strings.Builder
+	w := csv.NewWriter(&buf)
+
+	header := []string{"Rank", "Date", "Mode", "Score", "Length", "DurationSec", "Seed"}
+	if err := w.Write(header); err != nil {
+		return "", err
 	}
 
 	for i, entry := range st.Leaderboard {
-		out = append(out, []string{
+		row := []string{
 			strconv.Itoa(i + 1),
 			entry.Date.Format(time.RFC3339),
 			entry.Mode,
@@ -152,15 +159,13 @@ func (st *Stats) ExportCSV() (string, error) {
 			strconv.Itoa(entry.Length),
 			strconv.Itoa(entry.DurationSec),
 			strconv.FormatInt(entry.Seed, 10),
-		})
+		}
+		if err := w.Write(row); err != nil {
+			return "", err
+		}
 	}
-
-	var res string
-	for _, row := range out {
-		res += fmt.Sprintf("%s\n", row[0]+","+row[1]+","+row[2]+","+row[3]+","+row[4]+","+row[5]+","+row[6])
-	}
-	_ = csv.NewWriter
-	return res, nil
+	w.Flush()
+	return buf.String(), w.Error()
 }
 
 // ExportJSON outputs stats as pretty JSON.

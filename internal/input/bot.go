@@ -44,17 +44,23 @@ func (b *BotSolver) NextMove(g *engine.Game) engine.Direction {
 
 	if len(shortestPathToFood) > 0 {
 		nextStep := shortestPathToFood[0]
-		// Verify safety: if we take this step, can we still reach our tail?
-		sim := b.simulateStep(g, nextStep)
-		if sim != nil && (len(b.findPathBFS(sim, sim.Snake[0], tail)) > 0 || len(g.Snake) < 5) {
-			return b.directionFromPoints(head, nextStep)
+		candDir := b.directionFromPoints(head, nextStep)
+		if candDir != engine.DirNone && candDir != g.Direction.Opposite() {
+			// Verify safety: if we take this step, can we still reach our tail?
+			sim := b.simulateStep(g, nextStep)
+			if sim != nil && (len(b.findPathBFS(sim, sim.Snake[0], tail)) > 0 || len(g.Snake) < 5) {
+				return candDir
+			}
 		}
 	}
 
 	// 2. Fallback: Path to tail (survival / stall tactic)
 	pathToTail := b.findPathBFS(g, head, tail)
 	if len(pathToTail) > 0 {
-		return b.directionFromPoints(head, pathToTail[0])
+		candDir := b.directionFromPoints(head, pathToTail[0])
+		if candDir != engine.DirNone && candDir != g.Direction.Opposite() {
+			return candDir
+		}
 	}
 
 	// 3. Fallback: Any valid neighbor with maximum open space (flood fill heuristic)
@@ -153,6 +159,9 @@ func (b *BotSolver) findPathBFS(g *engine.Game, start, target engine.Point) []en
 		}
 
 		for _, dir := range directions {
+			if curr == start && dir == g.Direction.Opposite() {
+				continue
+			}
 			dx, dy := dir.Delta()
 			neighbor := engine.Point{X: curr.X + dx, Y: curr.Y + dy}
 
@@ -201,6 +210,7 @@ func (b *BotSolver) countReachableCells(g *engine.Game, start engine.Point) int 
 	count := 0
 
 	directions := []engine.Direction{engine.DirUp, engine.DirDown, engine.DirLeft, engine.DirRight}
+	isGhost := g.ActivePowerUp != nil && g.ActivePowerUp.Type == engine.ItemGhost
 	for len(queue) > 0 && count < 64 {
 		curr := queue[0]
 		queue = queue[1:]
@@ -209,6 +219,20 @@ func (b *BotSolver) countReachableCells(g *engine.Game, start engine.Point) int 
 		for _, dir := range directions {
 			dx, dy := dir.Delta()
 			neighbor := engine.Point{X: curr.X + dx, Y: curr.Y + dy}
+
+			if g.Config.Mode == engine.ModeZen || isGhost {
+				if neighbor.X < g.Bounds.MinX {
+					neighbor.X = g.Bounds.MaxX - 1
+				} else if neighbor.X >= g.Bounds.MaxX {
+					neighbor.X = g.Bounds.MinX
+				}
+				if neighbor.Y < g.Bounds.MinY {
+					neighbor.Y = g.Bounds.MaxY - 1
+				} else if neighbor.Y >= g.Bounds.MaxY {
+					neighbor.Y = g.Bounds.MinY
+				}
+			}
+
 			if !visited[neighbor] && b.isCellSafe(g, neighbor) {
 				visited[neighbor] = true
 				queue = append(queue, neighbor)

@@ -5,10 +5,30 @@ All notable changes to `snake` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2026-10-26
+
+### Added
+- **Shorthand Flags Across All Subcommands**: Registered standard shorthand flags `-m` (`--mode`), `-d` (`--difficulty`), `-s` (`--size`), and `-t` (`--theme`) across `snake play`, `snake daily`, and `snake bot`.
+- **Case-Insensitive Board Sizes**: Board size arguments accept lowercase `30x15` or uppercase `30X15`.
+- **Extreme-Level Testing Suite**: Added 28 comprehensive unit, stress, and race-detection tests (`engine_extreme_test.go`, `bot_extreme_test.go`, `storage_extreme_test.go`, `ui_extreme_test.go`, `cmd_test.go`) validating state fidelity, boundary conditions, and determinism.
+
+### Fixed
+- **Procedural Obstacle Safety Clearance**: Enforced 7×5 cell clearance box around starting snake coordinates across all 4 procedural patterns, preventing instant spawn collisions.
+- **Survival Mode Asymmetric Contraction & Trapped Items**: Contraction now shrinks independently in X and Y down to the 6×6 floor limit, and items caught outside shrinking borders are automatically pruned and respawned inside playable bounds.
+- **Time Attack Calibration**: Timer step interval accurately calibrated across all difficulty presets using `TicksForDuration(1 * time.Second)`.
+- **Score Multiplier Reset**: Consuming another power-up or poison apple while 3× Multiplier is active cleanly resets the multiplier to prevent stacking bugs.
+- **Zen Mode Food Starvation**: Coordinate map tracks unique occupied cells rather than raw length, ensuring continuous food generation even when snake length exceeds grid capacity.
+- **Hardware ASCII Protocol**: Fixed `'D'` packet mapping to `DirRight` (WASD standard).
+- **AI Bot Zen Reversal**: Added anti-180° turn prevention in Zen mode so the bot never attempts to reverse directly into its neck.
+- **UI Modal Box Widths**: Widened Lipgloss modal frames to 41 characters to prevent line wrapping and border misalignment on long game-over reasons.
+- **Save State Full Fidelity**: Serializes `BaseTickRateMs`, `WithObstacles`, `ObstacleDensity`, `ActivePowerUp`, `ScoreMultiplier`, `ConfigWidth`, and `ConfigHeight`, using atomic temp-file renames.
+- **Replay Gzip Flush**: Added explicit gzip flush error checking on `.snk` replay serialization.
+- **Stats CSV & Food Calculation**: Fixed `TotalFoodEaten` negative underflow on early deaths and standardized CSV export using Go's `encoding/csv.Writer`.
+
 ## [1.0.8] - 2026-10-15
 
 ### Added
-- **10s Zen Mode for Ghost Power-Up (`👻`)**: Eating a Ghost power-up now activates full **Zen Mode for 10.0 seconds**:
+- **10s Zen Mode for Ghost Power-Up (`👻`)**: Eating a Ghost power-up activates full **Zen Mode for 10.0 seconds**:
   - **Wall Wrapping**: Running into walls no longer stops the game; the snake smoothly wraps around the arena boundaries.
   - **Body Overlap Phasing**: The snake passes harmlessly through its own body segments without self-collision.
   - **Obstacle Phasing**: Safe passage directly through procedural obstacles.

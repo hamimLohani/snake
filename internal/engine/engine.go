@@ -185,20 +185,48 @@ func (g *Game) Tick() []Event {
 
 	// 3. Mode-specific tick adjustments
 	if g.Config.Mode == ModeSurvival {
-		// Shrink bounds every 50 ticks, minimum 6x6
-		if g.TickCount%50 == 0 && (g.Bounds.MaxX-g.Bounds.MinX > 6) && (g.Bounds.MaxY-g.Bounds.MinY > 6) {
-			g.Bounds.MinX++
-			g.Bounds.MaxX--
-			g.Bounds.MinY++
-			g.Bounds.MaxY--
-			g.LastEvents = append(g.LastEvents, Event{
-				Type:    EventWallShrink,
-				Message: "Warning! The walls are closing in!",
-			})
+		// Shrink bounds every 50 ticks, minimum 6x6 on each dimension independently
+		if g.TickCount%50 == 0 {
+			canShrinkX := (g.Bounds.MaxX - g.Bounds.MinX > 6)
+			canShrinkY := (g.Bounds.MaxY - g.Bounds.MinY > 6)
+			if canShrinkX || canShrinkY {
+				if canShrinkX {
+					g.Bounds.MinX++
+					g.Bounds.MaxX--
+				}
+				if canShrinkY {
+					g.Bounds.MinY++
+					g.Bounds.MaxY--
+				}
+				g.LastEvents = append(g.LastEvents, Event{
+					Type:    EventWallShrink,
+					Message: "Warning! The walls are closing in!",
+				})
+
+				// Prune any items now outside the contracted perimeter so food stays reachable
+				var remainingItems []FoodItem
+				prunedAny := false
+				for _, item := range g.FoodItems {
+					if item.Point.X >= g.Bounds.MinX && item.Point.X < g.Bounds.MaxX &&
+						item.Point.Y >= g.Bounds.MinY && item.Point.Y < g.Bounds.MaxY {
+						remainingItems = append(remainingItems, item)
+					} else {
+						prunedAny = true
+					}
+				}
+				if prunedAny {
+					g.FoodItems = remainingItems
+					g.spawnNeededItems()
+				}
+			}
 		}
 	} else if g.Config.Mode == ModeTimeAttack {
-		// Ticks are ~100ms, every 10 ticks = 1 second
-		if g.TickCount%10 == 0 && g.TimeRemainingSec > 0 {
+		// Calibrate timer tick interval based on game speed (1s = TicksForDuration(1s))
+		ticksPerSec := g.TicksForDuration(time.Second)
+		if ticksPerSec == 0 {
+			ticksPerSec = 10
+		}
+		if g.TickCount%ticksPerSec == 0 && g.TimeRemainingSec > 0 {
 			g.TimeRemainingSec--
 			if g.TimeRemainingSec <= 0 {
 				g.GameOver = true
@@ -419,6 +447,11 @@ func (g *Game) syncFoodFields() {
 
 // applyItemEffect processes score, growth, and 5-second duration effects.
 func (g *Game) applyItemEffect(item FoodItem) {
+	// If currently active powerup is multiplier and we are overwriting with another item, reset multiplier
+	if g.ActivePowerUp != nil && g.ActivePowerUp.Type == ItemMultiplier && item.Type != ItemMultiplier {
+		g.ScoreMultiplier = 1
+	}
+
 	ticks5s := g.TicksForDuration(5 * time.Second)
 	switch item.Type {
 	case ItemFood:
@@ -511,13 +544,14 @@ func (g *Game) consumeBonus() {
 
 // findOpenCell finds an empty grid coordinate not occupied by snake, obstacles, or food items.
 func (g *Game) findOpenCell() (Point, bool) {
-	totalCells := (g.Bounds.MaxX - g.Bounds.MinX) * (g.Bounds.MaxY - g.Bounds.MinY)
-	occupiedCount := len(g.Snake) + len(g.Obstacles) + len(g.FoodItems) + 2
-	if occupiedCount >= totalCells {
+	width := g.Bounds.MaxX - g.Bounds.MinX
+	height := g.Bounds.MaxY - g.Bounds.MinY
+	if width <= 0 || height <= 0 {
 		return Point{}, false
 	}
+	totalCells := width * height
 
-	occupied := make(map[Point]bool, occupiedCount)
+	occupied := make(map[Point]bool)
 	for _, p := range g.Snake {
 		occupied[p] = true
 	}
@@ -532,8 +566,9 @@ func (g *Game) findOpenCell() (Point, bool) {
 		occupied[g.BonusPoint] = true
 	}
 
-	width := g.Bounds.MaxX - g.Bounds.MinX
-	height := g.Bounds.MaxY - g.Bounds.MinY
+	if len(occupied) >= totalCells {
+		return Point{}, false
+	}
 
 	for attempts := 0; attempts < 500; attempts++ {
 		cand := Point{
@@ -570,15 +605,31 @@ func (g *Game) spawnBonusItem() {
 
 // spawnNeededItems maintains multiple permanent foods and special items (with poison hazard).
 func (g *Game) spawnNeededItems() {
-	totalCells := (g.Bounds.MaxX - g.Bounds.MinX) * (g.Bounds.MaxY - g.Bounds.MinY)
-	if len(g.Snake)+len(g.Obstacles) >= totalCells {
-		g.GameOver = true
-		g.GameOverReason = "Victory! Board fully cleared!"
-		g.LastEvents = append(g.LastEvents, Event{
-			Type:    EventGameOver,
-			Score:   g.Score,
-			Message: g.GameOverReason,
-		})
+	width := g.Bounds.MaxX - g.Bounds.MinX
+	height := g.Bounds.MaxY - g.Bounds.MinY
+	if width <= 0 || height <= 0 {
+		return
+	}
+	totalCells := width * height
+
+	occupied := make(map[Point]bool)
+	for _, p := range g.Snake {
+		occupied[p] = true
+	}
+	for o := range g.Obstacles {
+		occupied[o] = true
+	}
+
+	if len(occupied) >= totalCells {
+		if g.Config.Mode != ModeZen {
+			g.GameOver = true
+			g.GameOverReason = "Victory! Board fully cleared!"
+			g.LastEvents = append(g.LastEvents, Event{
+				Type:    EventGameOver,
+				Score:   g.Score,
+				Message: g.GameOverReason,
+			})
+		}
 		return
 	}
 

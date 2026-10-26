@@ -42,7 +42,7 @@ func LatestReplayPath() string {
 	return filepath.Join(ReplayDir(), "latest.snk")
 }
 
-// SaveReplay persists a replay file with gzip compression.
+// SaveReplay persists a replay file with gzip compression atomically.
 func SaveReplay(path string, rep ReplayFile) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -54,17 +54,32 @@ func SaveReplay(path string, rep ReplayFile) error {
 		return err
 	}
 
-	f, err := os.Create(path)
+	tmpPath := path + ".tmp"
+	f, err := os.Create(tmpPath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	gz := gzip.NewWriter(f)
-	defer gz.Close()
+	if _, err := gz.Write(data); err != nil {
+		_ = gz.Close()
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return err
+	}
 
-	_, err = gz.Write(data)
-	return err
+	if err := gz.Close(); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	return os.Rename(tmpPath, path)
 }
 
 // LoadReplay reads and decompresses a replay file.

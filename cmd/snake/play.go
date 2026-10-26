@@ -59,7 +59,8 @@ var playCmd = &cobra.Command{
 		startInMenu := !playDirect && !hasExplicitFlags
 
 		if playSize != "" {
-			switch strings.ToLower(playSize) {
+			cleanSize := strings.ToLower(playSize)
+			switch cleanSize {
 			case "small":
 				cfg.GridWidth = 20
 				cfg.GridHeight = 12
@@ -74,7 +75,7 @@ var playCmd = &cobra.Command{
 				cfg.GridHeight = 20
 			default:
 				var w, h int
-				if n, _ := fmt.Sscanf(playSize, "%dx%d", &w, &h); n == 2 && w >= 10 && h >= 8 {
+				if n, _ := fmt.Sscanf(cleanSize, "%dx%d", &w, &h); n == 2 && w >= 10 && h >= 8 {
 					cfg.GridWidth = w
 					cfg.GridHeight = h
 				} else {
@@ -135,7 +136,8 @@ var playCmd = &cobra.Command{
 		}
 
 		var game *engine.Game
-		if playResume && storage.HasSaveGame() {
+		resumeAllowed := playResume && (!hasExplicitFlags || cmd.Flags().Changed("resume"))
+		if resumeAllowed && storage.HasSaveGame() {
 			savedGame, err := storage.LoadSavedGame()
 			if err == nil {
 				game = savedGame
@@ -184,9 +186,9 @@ var playCmd = &cobra.Command{
 }
 
 func init() {
-	playCmd.Flags().StringVar(&playMode, "mode", "classic", "Game mode: classic, time-attack, survival, zen")
+	playCmd.Flags().StringVarP(&playMode, "mode", "m", "classic", "Game mode: classic, time-attack, survival, zen")
 	playCmd.Flags().Int64Var(&playSeed, "seed", 0, "Deterministic RNG seed (0 = random)")
-	playCmd.Flags().StringVar(&playTheme, "theme", "", "Visual theme: dark, light, high-contrast, colorblind, corporate")
+	playCmd.Flags().StringVarP(&playTheme, "theme", "t", "", "Visual theme: dark, light, high-contrast, colorblind, corporate")
 	playCmd.Flags().BoolVar(&playObstacles, "obstacles", false, "Generate procedural obstacles from seed")
 	playCmd.Flags().BoolVar(&playResume, "resume", true, "Auto-resume previous unfinished game if available")
 	playCmd.Flags().BoolVar(&playScreenReader, "screen-reader", false, "Accessible screen-reader output mode")

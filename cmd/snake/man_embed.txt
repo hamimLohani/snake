@@ -5,13 +5,14 @@ NAME
 
 SYNOPSIS
      snake [command] [options]
-     snake play [--mode mode] [--difficulty level] [--size preset|WxH]
-     [--direct] [--seed N] [--theme name] [--obstacles] [--resume] [--speed
-     ms] [--screen-reader] [--hardware-udp addr]
-     snake daily [--theme name]
+     snake play [-m, --mode mode] [-d, --difficulty level] [-s, --size
+     preset|WxH] [-t, --theme name] [--direct] [--seed N] [--obstacles]
+     [--resume] [--speed ms] [--screen-reader] [--hardware-udp addr]
+     snake daily [-t, --theme name]
      snake stats [--json | --csv]
      snake replay [file] [--speed ms] [--verify]
-     snake bot [--headless] [--ticks N] [--speed ms] [--seed N] [--theme name]
+     snake bot [--headless] [--ticks N] [--speed ms] [--seed N] [-t, --theme
+     name]
      snake config [--edit | --reset]
      snake --version
      snake --help
@@ -288,4 +289,4 @@ AUTHORS
 SEE ALSO
      htop(1), curses(3)
 
-snake 1.0.8			 October 2026			      SNAKE(6)
+snake 1.0.9			 October 2026			      SNAKE(6)

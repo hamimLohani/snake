@@ -18,6 +18,12 @@ func GenerateProceduralObstacles(width, height int, seed int64, density float64)
 		return x >= centerX-4 && x <= centerX+2 && y >= centerY-2 && y <= centerY+2
 	}
 
+	addObstacle := func(pt Point) {
+		if !isSafeZone(pt.X, pt.Y) && pt.X >= 0 && pt.X < width && pt.Y >= 0 && pt.Y < height {
+			obstacles[pt] = true
+		}
+	}
+
 	// Layout patterns based on seed
 	pattern := rng.IntN(4)
 
@@ -34,10 +40,7 @@ func GenerateProceduralObstacles(width, height int, seed int64, density float64)
 		for _, p := range pillars {
 			for dx := 0; dx <= 1; dx++ {
 				for dy := 0; dy <= 1; dy++ {
-					pt := Point{X: p.X + dx, Y: p.Y + dy}
-					if !isSafeZone(pt.X, pt.Y) && pt.X < width && pt.Y < height {
-						obstacles[pt] = true
-					}
+					addObstacle(Point{X: p.X + dx, Y: p.Y + dy})
 				}
 			}
 		}
@@ -48,14 +51,8 @@ func GenerateProceduralObstacles(width, height int, seed int64, density float64)
 		y2 := (height * 3) / 4
 		for x := 3; x < width-3; x++ {
 			if x != width/2 && x != width/2-1 && x != width/2+1 {
-				p1 := Point{X: x, Y: y1}
-				p2 := Point{X: x, Y: y2}
-				if !isSafeZone(p1.X, p1.Y) {
-					obstacles[p1] = true
-				}
-				if !isSafeZone(p2.X, p2.Y) {
-					obstacles[p2] = true
-				}
+				addObstacle(Point{X: x, Y: y1})
+				addObstacle(Point{X: x, Y: y2})
 			}
 		}
 
@@ -63,17 +60,17 @@ func GenerateProceduralObstacles(width, height int, seed int64, density float64)
 		// Cross corners
 		length := 3
 		for i := 0; i < length; i++ {
-			obstacles[Point{X: 2 + i, Y: 2}] = true
-			obstacles[Point{X: 2, Y: 2 + i}] = true
+			addObstacle(Point{X: 2 + i, Y: 2})
+			addObstacle(Point{X: 2, Y: 2 + i})
 
-			obstacles[Point{X: width - 3 - i, Y: 2}] = true
-			obstacles[Point{X: width - 3, Y: 2 + i}] = true
+			addObstacle(Point{X: width - 3 - i, Y: 2})
+			addObstacle(Point{X: width - 3, Y: 2 + i})
 
-			obstacles[Point{X: 2 + i, Y: height - 3}] = true
-			obstacles[Point{X: 2, Y: height - 3 - i}] = true
+			addObstacle(Point{X: 2 + i, Y: height - 3})
+			addObstacle(Point{X: 2, Y: height - 3 - i})
 
-			obstacles[Point{X: width - 3 - i, Y: height - 3}] = true
-			obstacles[Point{X: width - 3, Y: height - 3 - i}] = true
+			addObstacle(Point{X: width - 3 - i, Y: height - 3})
+			addObstacle(Point{X: width - 3, Y: height - 3 - i})
 		}
 
 	case 3:
@@ -82,15 +79,21 @@ func GenerateProceduralObstacles(width, height int, seed int64, density float64)
 		if numClusters < 2 {
 			numClusters = 2
 		}
+		spanX := width - 4
+		spanY := height - 4
+		if spanX <= 0 {
+			spanX = 1
+		}
+		if spanY <= 0 {
+			spanY = 1
+		}
 		for c := 0; c < numClusters; c++ {
-			cx := 2 + rng.IntN(width-4)
-			cy := 2 + rng.IntN(height-4)
+			cx := 2 + rng.IntN(spanX)
+			cy := 2 + rng.IntN(spanY)
 			for i := 0; i < 3; i++ {
 				ox := cx + rng.IntN(2)
 				oy := cy + rng.IntN(2)
-				if !isSafeZone(ox, oy) && ox >= 1 && ox < width-1 && oy >= 1 && oy < height-1 {
-					obstacles[Point{X: ox, Y: oy}] = true
-				}
+				addObstacle(Point{X: ox, Y: oy})
 			}
 		}
 	}

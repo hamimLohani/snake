@@ -92,11 +92,11 @@ func ParseControllerPacket(data []byte) engine.Direction {
 	switch text {
 	case "UP", "U", "W":
 		return engine.DirUp
-	case "DOWN", "D", "S":
+	case "DOWN", "S":
 		return engine.DirDown
 	case "LEFT", "L", "A":
 		return engine.DirLeft
-	case "RIGHT", "R", "D_KEY":
+	case "RIGHT", "R", "D":
 		return engine.DirRight
 	default:
 		// Check first token in case of newline or space
@@ -104,13 +104,13 @@ func ParseControllerPacket(data []byte) engine.Direction {
 		if scanner.Scan() {
 			token := scanner.Text()
 			switch token {
-			case "UP", "U":
+			case "UP", "U", "W":
 				return engine.DirUp
-			case "DOWN", "D":
+			case "DOWN", "S":
 				return engine.DirDown
-			case "LEFT", "L":
+			case "LEFT", "L", "A":
 				return engine.DirLeft
-			case "RIGHT", "R":
+			case "RIGHT", "R", "D":
 				return engine.DirRight
 			}
 		}

@@ -961,30 +961,34 @@ func (m UIModel) renderRichGame() string {
 	// 3. Status Overlays
 	var statusOverlay string
 	if m.Game.GameOver {
+		reason := m.Game.GameOverReason
+		if len(reason) > 30 {
+			reason = reason[:30]
+		}
 		gameOverBox := m.Theme.ModalStyle.Render(fmt.Sprintf(
-			"╔═══════════════════════════════════╗\n"+
-				"║             GAME OVER             ║\n"+
-				"║  Reason: %-24s ║\n"+
-				"║  Final Score: %-19d ║\n"+
-				"║  Length:      %-19d ║\n"+
-				"║                                   ║\n"+
-				"║  [R] Restart                      ║\n"+
-				"║  [M] Change Mode / Difficulty     ║\n"+
-				"║  [Q] Quit                         ║\n"+
-				"╚═══════════════════════════════════╝",
-			m.Game.GameOverReason, m.Game.Score, len(m.Game.Snake),
+			"╔═════════════════════════════════════════╗\n"+
+				"║                GAME OVER                ║\n"+
+				"║  Reason: %-30s ║\n"+
+				"║  Final Score: %-25d ║\n"+
+				"║  Length:      %-25d ║\n"+
+				"║                                         ║\n"+
+				"║  [R] Restart                            ║\n"+
+				"║  [M] Change Mode / Difficulty           ║\n"+
+				"║  [Q] Quit                               ║\n"+
+				"╚═════════════════════════════════════════╝",
+			reason, m.Game.Score, len(m.Game.Snake),
 		))
 		statusOverlay = gameOverBox
 	} else if m.Paused {
 		pauseBox := m.Theme.ModalStyle.Render(
-			"╔═══════════════════════════════════╗\n" +
-				"║              PAUSED               ║\n" +
-				"║                                   ║\n" +
-				"║  Press [P] or Space to resume     ║\n" +
-				"║  Press [M] for Mode & Difficulty  ║\n" +
-				"║  Press [B] for Boss Screen        ║\n" +
-				"║  Press [Q] to quit                ║\n" +
-				"╚═══════════════════════════════════╝",
+			"╔═════════════════════════════════════════╗\n" +
+				"║                 PAUSED                  ║\n" +
+				"║                                         ║\n" +
+				"║  Press [P] or Space to resume           ║\n" +
+				"║  Press [M] for Mode & Difficulty        ║\n" +
+				"║  Press [B] for Boss Screen              ║\n" +
+				"║  Press [Q] to quit                      ║\n" +
+				"╚═════════════════════════════════════════╝",
 		)
 		statusOverlay = pauseBox
 	}
